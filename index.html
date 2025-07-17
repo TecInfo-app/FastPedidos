@@ -1,0 +1,2692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Entregas - Motoboys (Firebase)</title>
+
+    <style>
+        /* Estilos CSS do layout Padrão: Define o visual padrão do aplicativo */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s; /* Transição suave para mudanças de layout */
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        label.required:after {
+            content: " *";
+            color: #e74c3c;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+        }
+        
+        input:invalid, select:invalid {
+            border-color: #e74c3c;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s, color 0.3s, border 0.3s, box-shadow 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .success-message {
+            background-color: #2ecc71;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .motoboy-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .motoboy-block {
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .motoboy-block:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .motoboy-block.selected {
+            /* Cor azul um pouco mais escura para destaque */
+            background-color: #a7d9f7; /* Um azul mais forte que o anterior */
+            border-color: #2980b9;
+        }
+        
+        .motoboy-block.ifood {
+            border-color: #e74c3c;
+            background-color: #ffebee;
+        }
+        
+        .motoboy-name {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .fee-section {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .fee-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .fee-option {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-align: center;
+        }
+        
+        .fee-option:hover {
+            background-color: #e9ecef;
+        }
+        
+        .fee-option.selected {
+            background-color: #d4edff;
+            font-weight: bold;
+        }
+        
+        .custom-fee-container {
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .confirm-btn {
+            background-color: #2ecc71;
+        }
+        
+        .confirm-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap; /* Permite que os botões quebrem a linha em telas menores */
+        }
+        
+        /* Estilos para diminuir os botões na linha de ações */
+        .action-buttons button {
+            flex: 1;
+            padding: 8px 15px; /* Diminuído o padding */
+            font-size: 14px; /* Diminuído o tamanho da fonte */
+        }
+        
+        .clear-btn {
+            background-color: #e74c3c;
+        }
+        
+        .clear-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .print-btn {
+            background-color: #9b59b6;
+        }
+        
+        .print-btn:hover {
+            background-color: #8e44ad;
+        }
+        
+        .table-container {
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .delivery-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+        
+        .delivery-order {
+            flex: 2;
+        }
+        
+        .delivery-fee {
+            flex: 1;
+            text-align: right;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .total-row {
+            font-weight: bold;
+            background-color: #fffde7;
+            border-top: 2px solid #333;
+            margin-top: 5px;
+        }
+        
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 3px 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .motoboy-column {
+            min-width: 200px;
+        }
+        
+        .date-column {
+            width: 100px;
+        }
+        
+        /* Estilos específicos para impressão individual e total */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .print-area, .print-area * {
+                visibility: visible;
+            }
+            .print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+                font-family: Arial, sans-serif;
+                box-sizing: border-box; /* Include padding in element's total width and height */
+            }
+            .print-header {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            .print-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            .print-list-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 5px 0;
+                border-bottom: 1px dashed #ccc;
+                font-size: 14px;
+            }
+            .print-list-item:last-child {
+                border-bottom: none;
+            }
+            .print-total {
+                text-align: right;
+                margin-top: 20px;
+                font-size: 16px;
+                font-weight: bold;
+                padding-top: 10px;
+                border-top: 2px solid #000;
+            }
+            .print-signature {
+                margin-top: 80px;
+                text-align: center;
+            }
+            .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+            .print-table th, .print-table td {
+                border: 1px solid #000;
+                padding: 8px;
+                text-align: left;
+            }
+            .print-table th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+            }
+            .print-table tfoot td {
+                font-weight: bold;
+            }
+            .no-print {
+                display: none;
+            }
+
+            /* New styles for grouped print report */
+            .motoboy-report-section {
+                margin-bottom: 25px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid #ddd;
+            }
+            .motoboy-section-header {
+                text-align: left;
+                margin-top: 0;
+                margin-bottom: 10px;
+                color: #2c3e50;
+                font-size: 18px;
+                border-bottom: 2px solid #3498db;
+                padding-bottom: 5px;
+            }
+            .motoboy-deliveries-list {
+                margin-left: 10px;
+            }
+            .motoboy-subtotal {
+                text-align: right;
+                font-weight: bold;
+                margin-top: 10px;
+                padding-top: 5px;
+                border-top: 1px dashed #ccc;
+            }
+
+            /* Styles for the main print table (like spreadsheet) */
+            .print-table-main {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+            .print-table-main th, .print-table-main td {
+                border: 1px solid #000;
+                padding: 8px;
+                text-align: left;
+                vertical-align: top;
+                word-wrap: break-word;
+            }
+            .print-table-main th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+            }
+            .print-table-main tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            .print-delivery-item {
+                display: flex;
+                flex-direction: column; /* Stack items vertically */
+                padding: 4px 0;
+                border-bottom: 1px dotted #e0e0e0;
+                margin-bottom: 4px;
+            }
+            .print-delivery-item:last-of-type {
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+            .print-delivery-item span {
+                font-size: 11px; /* Smaller font for individual items */
+            }
+            .print-delivery-item .print-delivery-fee {
+                font-weight: bold;
+                text-align: right;
+                font-size: 11px;
+            }
+            .print-total-row {
+                font-weight: bold;
+                background-color: #fffbe7;
+                border-top: 1px solid #ccc;
+                margin-top: 5px;
+                padding-top: 5px;
+                text-align: right;
+                font-size: 12px;
+            }
+            .overall-grand-total {
+                text-align: right;
+                margin-top: 30px;
+                font-size: 18px;
+                font-weight: bold;
+                padding-top: 15px;
+                border-top: 3px double #000;
+            }
+        }
+        
+        .motoboy-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap; /* Allow buttons to wrap */
+        }
+        .motoboy-header .print-btn {
+            margin-left: 5px; /* Space between buttons */
+            margin-top: 5px; /* For wrapping */
+        }
+
+
+        /* Styles for search section */
+        .search-section {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f8f8f8;
+        }
+
+        .search-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px; /* Adjust spacing between input and buttons */
+        }
+
+        .search-buttons button {
+            flex-grow: 1; /* Make buttons expand equally */
+        }
+
+        .search-results {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #cce5ff;
+            background-color: #e6f7ff;
+            border-radius: 5px;
+            color: #0056b3;
+            font-weight: bold;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+        .search-results.not-found {
+            background-color: #ffe6e6;
+            border-color: #ffb3b3;
+            color: #cc0000;
+        }
+
+        .whatsapp-icon {
+            width: 30px; /* Tamanho do ícone */
+            height: 30px;
+            vertical-align: middle;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        /* --- Estilos para o Layout Escuro --- */
+        body.layout-dark {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+        body.layout-dark .container {
+            background-color: #2c2c2c;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        body.layout-dark h1, body.layout-dark label {
+            color: #f0f0f0;
+        }
+        body.layout-dark input, body.layout-dark select {
+            background-color: #444;
+            color: #f0f0f0;
+            border-color: #555;
+        }
+        body.layout-dark button {
+            background-color: #555;
+            color: #f0f0f0;
+        }
+        body.layout-dark button:hover {
+            background-color: #666;
+        }
+        body.layout-dark .clear-btn {
+            background-color: #c0392b;
+        }
+        body.layout-dark .clear-btn:hover {
+            background-color: #a02a1d;
+        }
+        body.layout-dark .print-btn {
+            background-color: #7f52a3;
+        }
+        body.layout-dark .print-btn:hover {
+            background-color: #6a448a;
+        }
+        body.layout-dark .export-btn, body.layout-dark .import-btn { /* Specific styles for export/import if needed */
+            background-color: #278d53;
+        }
+        body.layout-dark .export-btn:hover, body.layout-dark .import-btn:hover {
+            background-color: #1f6b40;
+        }
+        body.layout-dark .motoboy-block {
+            border-color: #555;
+            background-color: #3e3e3e;
+            color: #f0f0f0;
+        }
+        body.layout-dark .motoboy-block:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        body.layout-dark .motoboy-block.selected {
+            background-color: #4a4a4a;
+            border-color: #888;
+        }
+        body.layout-dark .motoboy-block.ifood {
+            border-color: #e74c3c; /* mantém a borda vermelha */
+            background-color: #4a302e; /* fundo escuro avermelhado */
+        }
+        body.layout-dark .fee-option {
+            background-color: #3e3e3e;
+        }
+        body.layout-dark .fee-option:hover {
+            background-color: #4a4a4a;
+        }
+        body.layout-dark .fee-option.selected {
+            background-color: #5a5a5a;
+        }
+        body.layout-dark th, body.layout-dark table {
+            background-color: #3a3a3a;
+            border-color: #555;
+        }
+        body.layout-dark th {
+            background-color: #4a4a4a;
+            color: #f0f0f0;
+        }
+        body.layout-dark tr:nth-child(even) {
+            background-color: #333;
+        }
+        body.layout-dark .delivery-item {
+            border-bottom-color: #555;
+        }
+        body.layout-dark .total-row {
+            background-color: #4a4a4a;
+            border-top-color: #888;
+        }
+        body.layout-dark .delete-btn {
+            background-color: #c0392b;
+        }
+        body.layout-dark .delete-btn:hover {
+            background-color: #a02a1d;
+        }
+        body.layout-dark .search-section {
+            background-color: #3a3a3a;
+            border-color: #555;
+        }
+        body.layout-dark .search-results {
+            background-color: #4a4a4a;
+            border-color: #666;
+            color: #9fe0ff;
+        }
+        body.layout-dark .search-results.not-found {
+            background-color: #6b3e3e;
+            border-color: #a02a1d;
+            color: #ff9999;
+        }
+
+        /* --- Estilos para o Layout Minimalista --- */
+        body.layout-minimal {
+            background-color: #ffffff;
+            color: #333;
+        }
+        body.layout-minimal .container {
+            background-color: #ffffff;
+            box-shadow: none;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+        body.layout-minimal h1, body.layout-minimal label {
+            color: #333;
+        }
+        body.layout-minimal input, body.layout-minimal select {
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background-color: #fff;
+            color: #333;
+        }
+        body.layout-minimal button {
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-shadow: none;
+            font-weight: normal;
+        }
+        body.layout-minimal button:hover {
+            background-color: #e0e0e0;
+            box-shadow: none;
+        }
+        body.layout-minimal .clear-btn {
+            background-color: #ffdddd;
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+        body.layout-minimal .clear-btn:hover {
+            background-color: #ffcccc;
+        }
+        body.layout-minimal .print-btn {
+            background-color: #e6e6ff;
+            border-color: #9b59b6;
+            color: #9b59b6;
+        }
+        body.layout-minimal .print-btn:hover {
+            background-color: #d9d9ff;
+        }
+        body.layout-minimal .confirm-btn {
+            background-color: #ddffdd;
+            border-color: #2ecc71;
+            color: #2ecc71;
+        }
+        body.layout-minimal .confirm-btn:hover {
+            background-color: #ccffcc;
+        }
+
+        body.layout-minimal .motoboy-block {
+            border: 1px solid #ccc;
+            background-color: #f8f8f8;
+            box-shadow: none;
+            transition: none;
+        }
+        body.layout-minimal .motoboy-block:hover {
+            transform: none;
+            background-color: #e8e8e8;
+            box-shadow: none;
+        }
+        body.layout-minimal .motoboy-block.selected {
+            background-color: #e0eaff;
+            border-color: #6699ff;
+        }
+        body.layout-minimal .motoboy-block.ifood {
+            border-color: #e74c3c;
+            background-color: #ffeeee;
+        }
+        body.layout-minimal .fee-option {
+            background-color: #f0f0f0;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            transition: none;
+        }
+        body.layout-minimal .fee-option:hover {
+            background-color: #e5e5e5;
+        }
+        body.layout-minimal .fee-option.selected {
+            background-color: #d8f0ff;
+            font-weight: bold;
+        }
+        body.layout-minimal th, body.layout-minimal td {
+            border: 1px solid #e0e0e0;
+        }
+        body.layout-minimal th {
+            background-color: #f5f5f5;
+        }
+        body.layout-minimal tr:nth-child(even) {
+            background-color: #fcfcfc;
+        }
+        body.layout-minimal .delivery-item {
+            border-bottom-color: #e8e8e8;
+        }
+        body.layout-minimal .total-row {
+            background-color: #f0f0f0;
+            border-top: 1px solid #ccc;
+        }
+        body.layout-minimal .delete-btn {
+            background-color: #f2a297;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+        body.layout-minimal .delete-btn:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+        body.layout-minimal .search-section {
+            background-color: #fefefe;
+            border-color: #e0e0e0;
+        }
+        body.layout-minimal .search-results {
+            background-color: #f0f8ff;
+            border-color: #b0dfff;
+            color: #004085;
+        }
+        body.layout-minimal .search-results.not-found {
+            background-color: #fff0f0;
+            border-color: #ffb3b3;
+            color: #cc0000;
+        }
+
+        /* Botão de mudar layout */
+        .layout-changer-container {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .layout-changer-button {
+            padding: 8px 15px;
+            font-size: 14px;
+            background-color: #6c757d;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s;
+        }
+        .layout-changer-button:hover {
+            background-color: #5a6268;
+        }
+
+        /* Estilos para a seção de login: Define como a tela de login aparecerá */
+        #loginSection {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 400px;
+            margin: 50px auto; /* Centraliza a caixa de login */
+            text-align: center;
+        }
+
+        #loginSection h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+
+        #loginSection input {
+            margin-bottom: 15px;
+        }
+
+        #loginSection button {
+            width: 100%; /* Faz os botões ocuparem a largura total da caixa */
+            margin-top: 10px;
+            padding: 12px;
+        }
+
+        #loginSection button + button {
+            margin-top: 10px; /* Espaçamento entre os botões de login/cadastro */
+        }
+
+        /* Estilo para a mensagem de boas-vindas e botão de logout no cabeçalho */
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .header-info p {
+            margin: 0;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .header-info button {
+            padding: 5px 10px;
+            font-size: 13px;
+            background-color: #e74c3c; /* Cor para o botão de logout */
+        }
+        .header-info button:hover {
+            background-color: #c0392b;
+        }
+        /* Ajustes para o modo escuro */
+        body.layout-dark .header-info p {
+            color: #f0f0f0;
+        }
+        body.layout-dark .header-info {
+            border-bottom-color: #555;
+        }
+
+        /* Estilos para a seleção de loja */
+        .store-selection-grid {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .store-option {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .store-option:hover {
+            background-color: #e3f2fd;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .store-option input[type="radio"] {
+            margin-right: 10px;
+            width: auto; /* Override 100% width */
+        }
+
+        .store-option input[type="radio"]:checked + span {
+            color: #2980b9;
+        }
+
+        /* Dark mode for store selection */
+        body.layout-dark .store-option {
+            border-color: #555;
+            background-color: #3e3e3e;
+            color: #f0f0f0;
+        }
+        body.layout-dark .store-option:hover {
+            background-color: #4a4a4a;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        body.layout-dark .store-option input[type="radio"]:checked + span {
+            color: #9fe0ff;
+        }
+
+        /* Minimalist mode for store selection */
+        body.layout-minimal .store-option {
+            border: 1px solid #ccc;
+            background-color: #f8f8f8;
+            box-shadow: none;
+            transition: none;
+        }
+        body.layout-minimal .store-option:hover {
+            background-color: #e8e8e8;
+        }
+        body.layout-minimal .store-option input[type="radio"]:checked + span {
+            color: #6699ff;
+        }
+
+        /* Filter section styles */
+        .filter-section {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f8f8f8;
+        }
+        body.layout-dark .filter-section {
+            background-color: #3a3a3a;
+            border-color: #555;
+        }
+        body.layout-minimal .filter-section {
+            background-color: #fefefe;
+            border-color: #e0e0e0;
+        }
+
+        /* Styles for highlighted delivery */
+        .highlighted-delivery {
+            background-color: #ffeb3b; /* A nice yellow for highlighting */
+            border: 2px solid #fbc02d;
+            box-shadow: 0 0 8px rgba(255, 235, 59, 0.7);
+            animation: pulse-highlight 1.5s infinite alternate; /* Optional: subtle animation */
+        }
+
+        @keyframes pulse-highlight {
+            from {
+                transform: scale(1);
+                opacity: 1;
+            }
+            to {
+                transform: scale(1.02);
+                opacity: 0.9;
+            }
+        }
+
+        /* Dark mode for highlighted delivery */
+        body.layout-dark .highlighted-delivery {
+            background-color: #a08c00; /* Darker yellow for dark mode */
+            border-color: #d4ac00;
+            box-shadow: 0 0 8px rgba(160, 140, 0, 0.7);
+        }
+
+        /* Minimalist mode for highlighted delivery */
+        body.layout-minimal .highlighted-delivery {
+            background-color: #fffacd; /* Lighter yellow for minimalist mode */
+            border-color: #ffd700;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Seção de Login -->
+        <div id="loginSection" style="display: flex; flex-direction: column;">
+            <h2>Bem-vindo(a) ao Controle de Entregas!</h2>
+            <p>Por favor, faça login ou registre-se para continuar.</p>
+            <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" placeholder="seuemail@exemplo.com" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Senha</label>
+                <input type="password" id="loginPassword" placeholder="Sua senha" required>
+            </div>
+            <button type="button" id="loginBtn">Entrar</button>
+            <button type="button" id="registerBtn">Registrar</button>
+            <div class="error-message" id="loginError" style="margin-top: 15px;"></div>
+        </div>
+
+        <!-- Seção do Aplicativo Principal (inicialmente oculta) -->
+        <div id="mainAppSection" style="display: none;">
+            <div class="layout-changer-container">
+                <button type="button" id="toggleLayoutBtn" class="layout-changer-button">Mudar Layout</button>
+            </div>
+
+            <div class="header-info">
+                <p id="welcomeUser">Bem-vindo(a)!</p>
+                <button type="button" id="logoutBtn">Sair</button>
+            </div>
+
+            <h1>Controle de Entregas - Motoboys</h1>
+            
+            <!-- Mensagens de sucesso ou erro (ocultas por padrão) -->
+            <div class="success-message" id="successMessage">
+                </div>
+            
+            <form id="deliveryForm">
+                <div class="form-group">
+                    <label for="orderNumber" class="required">Número do Pedido</label>
+                    <input type="number" id="orderNumber" required inputmode="numeric" pattern="[0-9]*">
+                    <div class="error-message" id="orderNumberError">Por favor, informe o número do pedido</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="required">Loja</label>
+                    <div class="store-selection-grid">
+                        <label class="store-option">
+                            <input type="radio" name="store" value="Cia do Chopp" checked>
+                            <span>Cia do Chopp</span>
+                        </label>
+                        <label class="store-option">
+                            <input type="radio" name="store" value="Pizzaria">
+                            <span>Pizzaria</span>
+                        </label>
+                        <label class="store-option">
+                            <input type="radio" name="store" value="Adega">
+                            <span>Adega</span>
+                        </label>
+                    </div>
+                    <div class="error-message" id="storeError">Por favor, selecione uma loja</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="required">Selecione o Entregador</label>
+                    <div class="motoboy-grid">
+                        <div class="motoboy-block" data-motoboy="FELIPE">
+                            <div class="motoboy-name">FELIPE</div>
+                        </div>
+                        
+                        <div class="motoboy-block" data-motoboy="JONAS">
+                            <div class="motoboy-name">JONAS</div>
+                        </div>
+                        
+                        <div class="motoboy-block" data-motoboy="JOAS">
+                            <div class="motoboy-name">JOAS</div>
+                        </div>
+                        
+                        <div class="motoboy-block" data-motoboy="LEO">
+                            <div class="motoboy-name">LEO</div>
+                        </div>
+                        
+                        <div class="motoboy-block" data-motoboy="MACIEL">
+                            <div class="motoboy-name">MACIEL</div>
+                        </div>
+                        
+                        <div class="motoboy-block" data-motoboy="PEDRO AUGUSTO">
+                            <div class="motoboy-name">PEDRO AUGUSTO</div>
+                        </div>
+                        
+                        <div class="motoboy-block" data-motoboy="WESLEY">
+                            <div class="motoboy-name">WESLEY</div>
+                        </div>
+                        
+                        <div class="motoboy-block ifood" data-motoboy="IFOOD">
+                            <div class="motoboy-name">IFOOD</div>
+                        </div>
+                    </div>
+                    <div class="error-message" id="deliveryPersonError">Por favor, selecione um entregador</div>
+                </div>
+                
+                <div class="fee-section" id="feeSection">
+                    <h3>Selecione o valor da taxa para <span id="selectedMotoboyName"></span></h3>
+                    
+                    <div class="fee-options">
+                        <div class="fee-option" data-fee="6">R$ 6,00</div>
+                        <div class="fee-option" data-fee="12">R$ 12,00</div>
+                        <div class="fee-option" data-fee="17">R$ 17,00</div>
+                    </div>
+                    
+                    <div class="custom-fee-container" id="customFeeContainer">
+                        <input type="number" id="customFeeInput" placeholder="Digite o valor da taxa" step="0.01" min="0">
+                        <button type="button" class="confirm-btn" id="confirmCustomFeeBtn">Confirmar Taxa</button>
+                    </div>
+                    
+                    <button type="button" class="fee-option custom" id="customFeeOption">Outro valor</button>
+                    <button type="button" class="fee-option skip" id="skipFeeOption" style="margin-top: 10px; background-color: #95a5a6;">Pular taxa (iFood)</button>
+                    
+                    <div class="error-message" id="deliveryFeeError">Por favor, selecione ou informe o valor da taxa</div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button type="button" id="clearAllBtn" class="clear-btn">Limpar Tudo</button>
+                    <button type="button" id="exportDataBtn" class="print-btn" style="background-color: #3cb371;">Exportar Dados</button>
+                    <button type="button" id="importDataBtn" class="print-btn" style="background-color: #8a2be2;">Importar Dados</button>
+                    <button type="button" id="printAllBtn" class="print-btn">Imprimir Tudo</button>
+                </div>
+            </form>
+
+            <div class="search-section">
+                <h2>Pesquisar Pedido</h2>
+                <div class="form-group">
+                    <label for="searchOrderInput">Número do Pedido</label>
+                    <input type="text" id="searchOrderInput" placeholder="Digite o número do pedido">
+                </div>
+                <div class="search-buttons">
+                    <button type="button" id="searchOrderBtn">Pesquisar</button>
+                    <button type="button" id="clearSearchBtn" class="clear-btn" style="background-color: #6c757d;">Limpar Pesquisa</button>
+                </div>
+                <div class="search-results" id="searchResults">
+                    </div>
+            </div>
+
+            <div class="filter-section">
+                <h2>Filtrar por Loja</h2>
+                <div class="form-group">
+                    <label for="storeFilter">Selecione a Loja</label>
+                    <select id="storeFilter">
+                        <option value="all">Todas as Lojas</option>
+                        <option value="Cia do Chopp">Cia do Chopp</option>
+                        <option value="Pizzaria">Pizzaria</option>
+                        <option value="Adega">Adega</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <h2>Registro de Entregas</h2>
+                <table id="deliveryTable">
+                    <thead>
+                        <tr>
+                            <th class="date-column">Data</th>
+                            <th class="motoboy-column">
+                                <div class="motoboy-header">
+                                    <span>MACIEL</span>
+                                    <button class="print-btn" data-motoboy="MACIEL" data-report-type="individual" style="padding: 3px 6px; font-size: 12px;">Imprimir</button>
+                                    <button class="print-btn" data-motoboy="MACIEL" data-report-type="totals" style="padding: 3px 6px; font-size: 12px; background-color: #1abc9c;">Imprimir Totais</button>
+                                </div>
+                            </th>
+                            <th class="motoboy-column">
+                                <div class="motoboy-header">
+                                    <span>JOAS</span>
+                                    <button class="print-btn" data-motoboy="JOAS" data-report-type="individual" style="padding: 3px 6px; font-size: 12px;">Imprimir</button>
+                                    <button class="print-btn" data-motoboy="JOAS" data-report-type="totals" style="padding: 3px 6px; font-size: 12px; background-color: #1abc9c;">Imprimir Totais</button>
+                                </div>
+                            </th>
+                            <th class="motoboy-column">
+                                <div class="motoboy-header">
+                                    <span>LEO</span>
+                                    <button class="print-btn" data-motoboy="LEO" data-report-type="individual" style="padding: 3px 6px; font-size: 12px;">Imprimir</button>
+                                    <button class="print-btn" data-motoboy="LEO" data-report-type="totals" style="padding: 3px 6px; font-size: 12px; background-color: #1abc9c;">Imprimir Totais</button>
+                                </div>
+                            </th>
+                            <th class="motoboy-column">
+                                <div class="motoboy-header">
+                                    <span>PEDRO AUGUSTO</span>
+                                    <button class="print-btn" data-motoboy="PEDRO AUGUSTO" data-report-type="individual" style="padding: 3px 6px; font-size: 12px;">Imprimir</button>
+                                    <button class="print-btn" data-motoboy="PEDRO AUGUSTO" data-report-type="totals" style="padding: 3px 6px; font-size: 12px; background-color: #1abc9c;">Imprimir Totais</button>
+                                </div>
+                            </th>
+                            <th class="motoboy-column">
+                                <div class="motoboy-header">
+                                    <span>IFOOD</span>
+                                    <button class="print-btn" data-motoboy="IFOOD" data-report-type="individual" style="padding: 3px 6px; font-size: 12px;">Imprimir</button>
+                                    <button class="print-btn" data-motoboy="IFOOD" data-report-type="totals" style="padding: 3px 6px; font-size: 12px; background-color: #1abc9c;">Imprimir Totais</button>
+                                </div>
+                            </th>
+                            <th class="motoboy-column">
+                                <div class="motoboy-header">
+                                    <span>JONAS</span>
+                                    <button class="print-btn" data-motoboy="JONAS" data-report-type="individual" style="padding: 3px 6px; font-size: 12px;">Imprimir</button>
+                                    <button class="print-btn" data-motoboy="JONAS" data-report-type="totals" style="padding: 3px 6px; font-size: 12px; background-color: #1abc9c;">Imprimir Totais</button>
+                                </div>
+                            </th>
+                            <th class="motoboy-column">
+                                <div class="motoboy-header">
+                                    <span>WESLEY</span>
+                                    <button class="print-btn" data-motoboy="WESLEY" data-report-type="individual" style="padding: 3px 6px; font-size: 12px;">Imprimir</button>
+                                    <button class="print-btn" data-motoboy="WESLEY" data-report-type="totals" style="padding: 3px 6px; font-size: 12px; background-color: #1abc9c;">Imprimir Totais</button>
+                                </div>
+                            </th>
+                            <th class="motoboy-column">
+                                <div class="motoboy-header">
+                                    <span>FELIPE</span>
+                                    <button class="print-btn" data-motoboy="FELIPE" data-report-type="individual" style="padding: 3px 6px; font-size: 12px;">Imprimir</button>
+                                    <button class="print-btn" data-motoboy="FELIPE" data-report-type="totals" style="padding: 3px 6px; font-size: 12px; background-color: #1abc9c;">Imprimir Totais</button>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para seleção de período de impressão -->
+    <div id="printDateModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 400px; max-width: 90%;">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">Selecione o Período para Impressão</h3>
+            <div class="form-group">
+                <label for="startDateInput">Data de Início (opcional)</label>
+                <input type="date" id="startDateInput">
+            </div>
+            <div class="form-group">
+                <label for="endDateInput">Data de Fim (opcional)</label>
+                <input type="date" id="endDateInput">
+            </div>
+            <div style="display: flex; justify-content: space-around; margin-top: 20px;">
+                <button type="button" id="confirmPrintDateBtn" class="confirm-btn">Imprimir Selecionado</button>
+                <button type="button" id="printAllWithoutDateBtn" class="print-btn" style="background-color: #6c757d;">Imprimir Tudo (Sem Data)</button>
+                <button type="button" id="cancelPrintDateBtn" class="clear-btn" style="background-color: #e74c3c;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Box -->
+    <div id="customMessageBox" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 350px; max-width: 90%; text-align: center;">
+            <p id="messageBoxText" style="margin-bottom: 20px; font-size: 16px; color: #333;"></p>
+            <div id="messageBoxButtons" style="display: flex; justify-content: center; gap: 10px;">
+                <!-- Buttons will be appended here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Input de arquivo oculto para importação de dados -->
+    <input type="file" id="importFileInput" style="display: none;" accept=".json">
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, deleteDoc, onSnapshot, query, getDocs, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Adicionado 'doc' à lista de importações
+
+        // Variáveis globais para Firebase
+        let app;
+        let auth;
+        let db;
+        let deliveriesCollectionRef; // Referência à coleção de entregas do usuário
+        let userId = null; // ID do usuário logado
+
+        // Variável global para armazenar os dados de entregas.
+        let deliveries = []; 
+        let currentMotoboy = null; // Armazena o motoboy selecionado atualmente
+        let currentFee = null;    // Armazena a taxa selecionada atualmente
+        let currentStore = "Cia do Chopp"; // Loja selecionada atualmente (padrão)
+
+        // Mapeamento de nomes de motoboys para números de WhatsApp
+        const WHATSAPP_NUMBERS = {
+            "MACIEL": "558188571963",
+            "LEO": "5581996780463",
+            "JONAS": "5581986882727",
+            "PEDRO AUGUSTO": "5581996058573",
+            "WESLEY": "5581999174861",
+            "FELIPE": "5581987890229",
+            "JOAS": "558197297359" 
+            // IFOOD não terá número de WhatsApp para contato direto
+        };
+
+        // Função para exibir mensagens customizadas (alert ou confirm)
+        function showCustomMessageBox(message, type, callback) {
+            const messageBox = document.getElementById('customMessageBox');
+            const messageBoxText = document.getElementById('messageBoxText');
+            const messageBoxButtons = document.getElementById('messageBoxButtons');
+
+            messageBoxText.textContent = message;
+            messageBoxButtons.innerHTML = ''; // Limpa botões anteriores
+
+            if (type === 'alert') {
+                const okBtn = document.createElement('button');
+                okBtn.textContent = 'OK';
+                okBtn.style.cssText = 'background-color: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-top: 10px;';
+                okBtn.addEventListener('click', () => {
+                    messageBox.style.display = 'none';
+                    if (callback) callback(true);
+                });
+                messageBoxButtons.appendChild(okBtn);
+            } else if (type === 'confirm') {
+                const confirmBtn = document.createElement('button');
+                confirmBtn.textContent = 'Confirmar';
+                confirmBtn.style.cssText = 'background-color: #2ecc71; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-right: 10px;';
+                confirmBtn.addEventListener('click', () => {
+                    messageBox.style.display = 'none';
+                    if (callback) callback(true);
+                });
+                messageBoxButtons.appendChild(confirmBtn);
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = 'Cancelar';
+                cancelBtn.style.cssText = 'background-color: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;';
+                cancelBtn.addEventListener('click', () => {
+                    messageBox.style.display = 'none';
+                    if (callback) callback(false);
+                });
+                messageBoxButtons.appendChild(cancelBtn);
+            }
+
+            messageBox.style.display = 'flex';
+        }
+
+        // Função para exibir mensagens de sucesso
+        function showSuccessMessage(message) {
+            const successMessage = document.getElementById('successMessage');
+            if (!successMessage) return; // Ensure element exists
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 3000); // Oculta a mensagem após 3 segundos
+        }
+        
+        // Função para exibir mensagens de erro para inputs
+        function displayError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            if (!errorElement) return; // Ensure element exists
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // Função para ocultar todas as mensagens de erro
+        function hideAllErrors() {
+            document.querySelectorAll('.error-message').forEach(error => {
+                error.style.display = 'none';
+            });
+        }
+
+        // Função para atualizar o estado dos botões de impressão/exportação com base na existência de dados
+        function updatePrintAndExportButtonState() {
+            const printAllBtn = document.getElementById('printAllBtn');
+            const exportDataBtn = document.getElementById('exportDataBtn');
+            const hasDeliveries = deliveries.length > 0;
+            if (printAllBtn) printAllBtn.disabled = !hasDeliveries;
+            if (exportDataBtn) exportDataBtn.disabled = !hasDeliveries;
+        }
+
+        // Função para deletar uma entrega específica
+        async function deleteDelivery(docId) {
+            try {
+                // <!-- --- INÍCIO DESTAQUE: Log para depuração de exclusão --- -->
+                console.log("Tentando remover documento com ID:", docId);
+                // <!-- --- FIM DESTAQUE --- -->
+                await deleteDoc(doc(deliveriesCollectionRef, docId));
+                showSuccessMessage('Pedido removido com sucesso!');
+            } catch (error) {
+                console.error("Erro ao remover documento: ", error);
+                showCustomMessageBox('Erro ao remover pedido. Tente novamente.', 'alert');
+            }
+        }
+
+        // Função para configurar o listener do Firestore para entregas
+        let unsubscribeFromDeliveries = null; // Variável para armazenar a função de desinscrição do listener
+
+        function setupFirestoreListener() {
+            // Se já houver um listener ativo, desinscreva-o primeiro
+            if (unsubscribeFromDeliveries) {
+                unsubscribeFromDeliveries();
+                unsubscribeFromDeliveries = null;
+            }
+
+            if (!userId) {
+                console.log("UserID não disponível, não é possível configurar o listener do Firestore.");
+                deliveries = []; // Limpa os dados se não houver usuário logado
+                updateTable();
+                updatePrintAndExportButtonState();
+                return;
+            }
+
+            // <!-- --- INÍCIO DESTAQUE: Insira o ID do seu aplicativo Firebase aqui --- -->
+            // Este é o Project ID do seu projeto Firebase, encontrado no console do Firebase.
+            // Exemplo: const appId = 'seu-projeto-firebase-12345';
+            const appId = 'SEU_PROJECT_ID_AQUI'; 
+            // <!-- --- FIM DESTAQUE --- -->
+
+            deliveriesCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'deliveries');
+            const q = query(deliveriesCollectionRef);
+
+            unsubscribeFromDeliveries = onSnapshot(q, (snapshot) => {
+                const fetchedDeliveries = [];
+                snapshot.forEach((doc) => {
+                    fetchedDeliveries.push({ id: doc.id, ...doc.data() });
+                });
+                deliveries = fetchedDeliveries;
+                console.log('Dados do Firestore atualizados:', deliveries);
+                updateTable();
+                updatePrintAndExportButtonState();
+            }, (error) => {
+                console.error("Erro ao buscar documentos do Firestore: ", error);
+                showCustomMessageBox('Erro ao carregar entregas. Por favor, recarregue a página.', 'alert');
+            });
+        }
+
+        // Função para atualizar a tabela de registro de entregas na UI
+        function updateTable(filterStore = document.getElementById('storeFilter')?.value || 'all') {
+            const tableBody = document.getElementById('tableBody');
+            if (!tableBody) return; // Garante que o elemento exista antes de manipular
+
+            tableBody.innerHTML = ''; // Limpa o corpo da tabela
+            
+            // <!-- --- INÍCIO DESTAQUE: Log para depuração dos dados de entregas --- -->
+            console.log("Dados de entregas para updateTable:", deliveries);
+            // <!-- --- FIM DESTAQUE --- -->
+
+            // Define a ordem dos motoboys na tabela
+            const motoboys = ["MACIEL", "JOAS", "LEO", "PEDRO AUGUSTO", "IFOOD", "JONAS", "WESLEY", "FELIPE"];
+            
+            // Filtra as entregas com base na loja selecionada no filtro
+            const filteredDeliveries = deliveries.filter(delivery => {
+                return filterStore === 'all' || (delivery.store && delivery.store === filterStore);
+            });
+
+            // Agrupa as entregas por data (apenas a parte da data, sem hora) e por motoboy (apenas as filtradas)
+            const deliveriesByDate = filteredDeliveries.reduce((acc, delivery) => {
+                // Extrai apenas a parte da data (DD/MM/YYYY)
+                const dateOnly = delivery.date.split(' ')[1]; 
+                if (!acc[dateOnly]) {
+                    acc[dateOnly] = {};
+                }
+                if (!acc[dateOnly][delivery.motoboy]) {
+                    acc[dateOnly][delivery.motoboy] = [];
+                }
+                acc[dateOnly][delivery.motoboy].push(delivery);
+                return acc;
+            }, {});
+        
+            // <!-- --- INÍCIO DESTAQUE: Log para depuração dos dados agrupados por data --- -->
+            console.log("Entregas agrupadas por data:", deliveriesByDate);
+            // <!-- --- FIM DESTAQUE --- -->
+
+            // Ordena as datas de forma crescente (mais antiga primeiro)
+            const sortedDates = Object.keys(deliveriesByDate).sort((a, b) => {
+                const [dayA, monthA, yearA] = a.split('/').map(Number);
+                const [dayB, monthB, yearB] = b.split('/').map(Number);
+                const dateA = new Date(yearA, monthA - 1, dayA);
+                const dateB = new Date(yearB, monthB - 1, dayB);
+                return dateA - dateB; // Alterado para ordenar as datas da mais antiga para a mais recente
+            });
+        
+            // Preenche as células para cada motoboy naquela data
+            sortedDates.forEach(date => {
+                // <!-- --- CORREÇÃO AQUI: Criar uma linha (<tr>) antes de inserir células (<td>) --- -->
+                const row = tableBody.insertRow(); 
+                // <!-- --- FIM DA CORREÇÃO --- -->
+
+                row.insertCell().textContent = date; // Célula para a data
+        
+                let totalDailyFees = {}; // Objeto para armazenar o total de taxas por motoboy para aquela data
+                motoboys.forEach(motoboy => {
+                    totalDailyFees[motoboy] = 0;
+                });
+        
+                // Preenche as células para cada motoboy naquela data
+                motoboys.forEach(motoboy => {
+                    const cell = row.insertCell();
+                    const motoboyDeliveries = deliveriesByDate[date][motoboy] || [];
+        
+                    motoboyDeliveries.forEach(delivery => {
+                        const deliveryItem = document.createElement('div');
+                        deliveryItem.classList.add('delivery-item');
+                        // Add data attributes for easier identification
+                        deliveryItem.setAttribute('data-order-number', delivery.orderNumber);
+                        deliveryItem.setAttribute('data-motoboy', motoboy); // Use the motoboy from the loop
+                        deliveryItem.setAttribute('data-full-date', delivery.date); // Full date string
+                        deliveryItem.setAttribute('data-store', delivery.store);
+                        deliveryItem.setAttribute('data-doc-id', delivery.id); // Firestore document ID
+        
+                        const orderSpan = document.createElement('span');
+                        orderSpan.classList.add('delivery-order');
+                        // Exibe apenas o horário para cada pedido na tabela principal
+                        const timeOnly = delivery.date.split(' ')[2]; 
+                        orderSpan.textContent = `Pedido: ${delivery.orderNumber} (${delivery.store}) - ${timeOnly}`; 
+                        deliveryItem.appendChild(orderSpan);
+        
+                        const feeSpan = document.createElement('span');
+                        feeSpan.classList.add('delivery-fee');
+                        feeSpan.textContent = `R$ ${parseFloat(delivery.fee).toFixed(2).replace('.', ',')}`; // Formata a taxa
+                        deliveryItem.appendChild(feeSpan);
+        
+                        // Botão de exclusão para cada item de entrega
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.classList.add('delete-btn');
+                        deleteBtn.textContent = 'x';
+                        deleteBtn.addEventListener('click', function() {
+                            showCustomMessageBox('Tem certeza que deseja remover este pedido?', 'confirm', (result) => {
+                                if (result) {
+                                    deleteDelivery(delivery.id); // Passa o ID do documento
+                                }
+                            });
+                        });
+                        deliveryItem.appendChild(deleteBtn);
+        
+                        cell.appendChild(deliveryItem);
+                        totalDailyFees[motoboy] += parseFloat(delivery.fee); // Acumula o total diário por motoboy
+                    });
+        
+                    // Exibe o total diário para cada motoboy se houver entregas
+                    if (motoboyDeliveries.length > 0) {
+                        const totalRow = document.createElement('div');
+                        totalRow.classList.add('total-row');
+                        totalRow.textContent = `Total: R$ ${totalDailyFees[motoboy].toFixed(2).replace('.', ',')}`;
+                        cell.appendChild(totalRow);
+                    }
+                });
+            });
+        }
+            
+        // Garante que o script seja executado apenas quando o DOM estiver completamente carregado
+        document.addEventListener('DOMContentLoaded', async function() {
+            // <!-- --- INÍCIO DESTAQUE: Insira suas configurações do Firebase aqui --- -->
+            // Substitua os valores de 'apiKey', 'authDomain', etc., pelos do seu projeto Firebase.
+            // Você pode encontrar essas informações no console do Firebase, em "Configurações do Projeto" -> "Seus apps".
+            const firebaseConfig = {
+  apiKey: "AIzaSyAVG8hV_SuDjfAF2rsXgXHdmvFGNZrOklk",
+  authDomain: "fastpedidos-19c69.firebaseapp.com",
+  projectId: "fastpedidos-19c69",
+  storageBucket: "fastpedidos-19c69.firebasestorage.app",
+  messagingSenderId: "74026676078",
+  appId: "1:74026676078:web:e9215dc017b96496dedb7f"
+};
+            // <!-- --- FIM DESTAQUE --- -->
+
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            // Referências a elementos do DOM para interação
+            const loginSection = document.getElementById('loginSection');
+            const mainAppSection = document.getElementById('mainAppSection');
+            const loginEmailInput = document.getElementById('loginEmail');
+            const loginPasswordInput = document.getElementById('loginPassword');
+            const loginBtn = document.getElementById('loginBtn');
+            const registerBtn = document.getElementById('registerBtn');
+            const loginErrorDiv = document.getElementById('loginError');
+            const welcomeUserP = document.getElementById('welcomeUser');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            const form = document.getElementById('deliveryForm');
+            const orderNumberInput = document.getElementById('orderNumber');
+            const feeSection = document.getElementById('feeSection');
+            const selectedMotoboyName = document.getElementById('selectedMotoboyName');
+            const customFeeContainer = document.getElementById('customFeeContainer');
+            const customFeeInput = document.getElementById('customFeeInput');
+            const confirmCustomFeeBtn = document.getElementById('confirmCustomFeeBtn');
+            const skipFeeOption = document.getElementById('skipFeeOption');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const printAllBtn = document.getElementById('printAllBtn');
+            const exportDataBtn = document.getElementById('exportDataBtn');
+            const importDataBtn = document.getElementById('importDataBtn');
+            const importFileInput = document.getElementById('importFileInput');
+
+            // Elementos para a funcionalidade de busca
+            const searchOrderInput = document.getElementById('searchOrderInput');
+            const searchOrderBtn = document.getElementById('searchOrderBtn');
+            const searchResultsDiv = document.getElementById('searchResults');
+            const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+            // Elementos para a funcionalidade de mudança de layout
+            const toggleLayoutBtn = document.getElementById('toggleLayoutBtn');
+            const bodyElement = document.body;
+
+            // Elementos para a seleção de loja
+            const storeRadios = document.querySelectorAll('input[name="store"]');
+            const storeFilterSelect = document.getElementById('storeFilter');
+
+            // Lógica para alternar entre layouts (padrão, escuro, minimalista)
+            const layouts = ['', 'layout-dark', 'layout-minimal']; 
+            let currentLayoutIndex = parseInt(localStorage.getItem('currentLayoutIndex') || '0');
+
+            function applyLayout(index) {
+                bodyElement.className = ''; 
+                if (layouts[index]) {
+                    bodyElement.classList.add(layouts[index]);
+                }
+                localStorage.setItem('currentLayoutIndex', index.toString());
+            }
+
+            applyLayout(currentLayoutIndex); // Aplica o layout salvo ou o padrão na inicialização
+
+            // Event listener para o botão de mudar layout
+            toggleLayoutBtn.addEventListener('click', function() {
+                currentLayoutIndex = (currentLayoutIndex + 1) % layouts.length;
+                applyLayout(currentLayoutIndex);
+            });
+
+            // Event listener para a seleção de loja (rádio buttons)
+            storeRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    currentStore = this.value;
+                    console.log('Loja selecionada:', currentStore);
+                });
+            });
+
+            // Event listener para o filtro de loja (select)
+            if (storeFilterSelect) {
+                storeFilterSelect.addEventListener('change', function() {
+                    updateTable(this.value); // Passa o valor selecionado para atualizar a tabela
+                });
+            }
+
+            // Adiciona event listeners para os blocos de motoboys para seleção
+            document.querySelectorAll('.motoboy-block').forEach(block => {
+                block.addEventListener('click', function() {
+                    // Remove a classe 'selected' de todos os blocos de motoboys
+                    document.querySelectorAll('.motoboy-block').forEach(b => {
+                        b.classList.remove('selected');
+                    });
+                    
+                    this.classList.add('selected'); // Adiciona a classe 'selected' ao bloco clicado
+                    currentMotoboy = this.getAttribute('data-motoboy'); // Atualiza o motoboy atual
+                    selectedMotoboyName.textContent = currentMotoboy; // Atualiza o nome exibido
+                    
+                    feeSection.style.display = 'block'; // Mostra a seção de seleção de taxa
+                    
+                    // Reseta as opções de taxa e campos customizados
+                    document.querySelectorAll('.fee-option').forEach(opt => opt.classList.remove('selected'));
+                    customFeeContainer.style.display = 'none';
+                    customFeeInput.value = '';
+                    currentFee = null;
+                    
+                    // Exibe ou oculta a opção "Pular taxa" para iFood
+                    if (currentMotoboy === 'IFOOD') {
+                        skipFeeOption.style.display = 'block';
+                    } else {
+                        skipFeeOption.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Adiciona event listeners para as opções de taxa
+            document.querySelectorAll('.fee-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.fee-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    customFeeContainer.style.display = 'none';
+                    customFeeInput.value = '';
+                    
+                    if (this.id === 'customFeeOption') {
+                        currentFee = null; // Reseta currentFee para forçar validação do input customizado
+                        customFeeContainer.style.display = 'block'; // Mostra o input para taxa customizada
+                    } else if (this.id === 'skipFeeOption') {
+                        currentFee = 0; // Taxa zero para iFood
+                        addDelivery();
+                    }
+                    else {
+                        currentFee = parseFloat(this.getAttribute('data-fee')); // Pega a taxa predefinida
+                        addDelivery();
+                    }
+                });
+            });
+            
+            // Event listener para o botão de confirmar taxa customizada
+            confirmCustomFeeBtn.addEventListener('click', function() {
+                const fee = parseFloat(customFeeInput.value);
+                if (!isNaN(fee) && fee >= 0) {
+                    currentFee = fee;
+                    addDelivery();
+                } else {
+                    displayError('deliveryFeeError', 'Por favor, insira um valor de taxa válido.');
+                }
+            });
+            
+            // Função para adicionar uma nova entrega
+            async function addDelivery() {
+                const orderNumber = orderNumberInput.value.trim();
+                hideAllErrors(); // Oculta mensagens de erro anteriores
+
+                // Validações dos campos
+                if (!orderNumber) {
+                    displayError('orderNumberError', 'Por favor, informe o número do pedido.');
+                    return;
+                }
+            
+                if (!currentMotoboy) {
+                    displayError('deliveryPersonError', 'Por favor, selecione um entregador.');
+                    return;
+                }
+
+                if (!currentStore) {
+                    displayError('storeError', 'Por favor, selecione uma loja.');
+                    return;
+                }
+            
+                if (currentFee === null && currentMotoboy !== 'IFOOD') { 
+                    displayError('deliveryFeeError', 'Por favor, selecione ou informe o valor da taxa.');
+                    return;
+                }
+            
+                const today = new Date();
+                // Get full date and time string including weekday
+                const dateString = today.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + today.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}); 
+
+                // Verifica duplicidade de pedidos para o mesmo motoboy na mesma data e loja
+                const isDuplicate = deliveries.some(delivery => 
+                    delivery.date === dateString && 
+                    delivery.motoboy === currentMotoboy && 
+                    delivery.orderNumber === orderNumber &&
+                    delivery.store === currentStore
+                );
+            
+                if (isDuplicate) {
+                    displayError('orderNumberError', `O pedido ${orderNumber} já foi lançado para ${currentMotoboy} na loja ${currentStore} hoje.`);
+                    return;
+                }
+            
+                try {
+                    // Adiciona a nova entrega ao Firestore
+                    await addDoc(deliveriesCollectionRef, {
+                        date: dateString,
+                        motoboy: currentMotoboy,
+                        orderNumber: orderNumber,
+                        fee: currentFee !== null ? parseFloat(currentFee).toFixed(2) : '0.00', // Formata a taxa para 2 casas decimais
+                        store: currentStore // Adiciona a loja ao objeto de entrega
+                    });
+                    showSuccessMessage(`Pedido cadastrado com sucesso para ${currentMotoboy}!`); 
+                    resetForm(); // Reseta os campos do formulário
+                } catch (e) {
+                    console.error("Erro ao adicionar documento: ", e);
+                    showCustomMessageBox('Erro ao adicionar pedido. Tente novamente.', 'alert');
+                }
+            }
+            
+            // Função para resetar o formulário após adicionar uma entrega
+            function resetForm() {
+                orderNumberInput.value = '';
+                document.querySelectorAll('.motoboy-block').forEach(b => b.classList.remove('selected'));
+                document.querySelectorAll('.fee-option').forEach(opt => opt.classList.remove('selected'));
+                feeSection.style.display = 'none';
+                customFeeContainer.style.display = 'none';
+                customFeeInput.value = '';
+                currentMotoboy = null;
+                currentFee = null;
+                hideAllErrors();
+                // Resetar a seleção de loja para "Cia do Chopp"
+                document.querySelector('input[name="store"][value="Cia do Chopp"]').checked = true;
+                currentStore = "Cia do Chopp"; // Assegura que a variável global também seja redefinida
+                console.log('Formulário resetado.'); // Log para depuração
+            }
+
+            // Event listener para o botão "Limpar Tudo"
+            clearAllBtn.addEventListener('click', function() {
+                showCustomMessageBox('Tem certeza que deseja limpar todo o registro de entregas? Esta ação é irreversível.', 'confirm', async (result) => {
+                    if (result) {
+                        try {
+                            // Para limpar todos os documentos, precisamos buscá-los primeiro
+                            const snapshot = await getDocs(deliveriesCollectionRef);
+                            const deletePromises = [];
+                            snapshot.forEach((doc) => {
+                                deletePromises.push(deleteDoc(doc.ref));
+                            });
+                            await Promise.all(deletePromises);
+                            showSuccessMessage('Registro de entregas limpo com sucesso!');
+                            resetForm(); // Reseta o formulário
+                        } catch (error) {
+                            console.error("Erro ao limpar todos os documentos: ", error);
+                            showCustomMessageBox('Erro ao limpar registro. Tente novamente.', 'alert');
+                        }
+                    }
+                });
+            });
+            
+            // Event listeners para os botões de impressão individual do motoboy no cabeçalho da tabela
+            document.querySelectorAll('th .print-btn[data-report-type="individual"]').forEach(button => {
+                button.addEventListener('click', function(event) {
+                    event.stopPropagation(); // Impede que o clique se propague para a coluna inteira
+                    const motoboyToPrint = this.getAttribute('data-motoboy');
+                    printMotoboyReport(motoboyToPrint);
+                });
+            });
+
+            // Event listeners para os novos botões "Imprimir Totais"
+            document.querySelectorAll('th .print-btn[data-report-type="totals"]').forEach(button => {
+                button.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    const motoboyToPrint = this.getAttribute('data-motoboy');
+                    printMotoboyTotalsReport(motoboyToPrint);
+                });
+            });
+            
+            // Função para gerar e imprimir um relatório de entregas por motoboy
+            function printMotoboyReport(motoboyName) {
+                const activeStoreFilter = document.getElementById('storeFilter').value; // Obtém o filtro de loja ativo
+                let reportContent = '';
+                let totalFee = 0;
+                // Obtém a data e hora atual para o relatório, incluindo o dia da semana
+                const today = new Date();
+                const currentDateTimeText = today.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + today.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+                // Filtra as entregas para o motoboy selecionado E para a loja selecionada no filtro
+                const motoboyDeliveries = deliveries.filter(d => 
+                    d.motoboy === motoboyName && 
+                    (activeStoreFilter === 'all' || d.store === activeStoreFilter)
+                );
+
+                motoboyDeliveries.forEach(delivery => {
+                    reportContent += `
+                        <li class="print-list-item">
+                            <span>Pedido: ${delivery.orderNumber} (${delivery.store})</span>
+                            <span>R$ ${parseFloat(delivery.fee).toFixed(2).replace('.', ',')}</span>
+                        </li>
+                    `;
+                    totalFee += parseFloat(delivery.fee);
+                });
+
+                // Abre uma nova janela para impressão e insere o HTML do relatório
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Relatório de Entregas - ${motoboyName}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+                            .print-area {
+                                padding: 20px;
+                                box-sizing: border-box;
+                            }
+                            .print-header {
+                                text-align: center;
+                                margin-bottom: 20px;
+                            }
+                            .print-list {
+                                list-style: none;
+                                padding: 0;
+                                margin: 0;
+                            }
+                            .print-list-item {
+                                display: flex;
+                                justify-content: space-between;
+                                padding: 5px 0;
+                                border-bottom: 1px dashed #ccc;
+                                font-size: 14px;
+                            }
+                            .print-list-item:last-child {
+                                border-bottom: none;
+                            }
+                            .print-total {
+                                text-align: right;
+                                margin-top: 20px;
+                                font-size: 16px;
+                                font-weight: bold;
+                                padding-top: 10px;
+                                border-top: 2px solid #000;
+                            }
+                            .print-signature {
+                                margin-top: 80px;
+                                text-align: center;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="print-area">
+                            <h2 class="print-header">Relatório de Entregas</h2>
+                            <h3 class="print-header">${motoboyName}</h3>
+                            <p class="print-header">Gerado em: ${currentDateTimeText}</p>
+                            ${activeStoreFilter !== 'all' ? `<p class="print-header">Loja: ${activeStoreFilter}</p>` : ''}
+                            <ul class="print-list">
+                                ${reportContent}
+                            </ul>
+                            <div class="print-total">
+                                Total de Taxas: R$ ${totalFee.toFixed(2).replace('.', ',')}
+                            </div>
+                            <div class="print-signature">
+                                <p>_________________________________________</p>
+                                <p>Assinatura do Motoboy</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close(); // Fecha o documento para escrita
+                printWindow.print(); // Abre a caixa de diálogo de impressão
+            }
+
+            // Função para gerar e imprimir um relatório de totais por motoboy e loja
+            function printMotoboyTotalsReport(motoboyName) {
+                let ciaDoChoppOrders = 0;
+                let ciaDoChoppFees = 0;
+                let pizzariaOrders = 0;
+                let pizzariaFees = 0;
+                let adegaOrders = 0; // Nova variável para Adega
+                let adegaFees = 0;   // Nova variável para Adega
+                let grandTotalOrders = 0;
+                let grandTotalFees = 0;
+
+                // Obtém a data e hora atual para o relatório, incluindo o dia da semana
+                const today = new Date();
+                const currentDateTimeText = today.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + today.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+                // Filtra as entregas para o motoboy selecionado
+                const motoboyDeliveries = deliveries.filter(d => d.motoboy === motoboyName);
+
+                motoboyDeliveries.forEach(delivery => {
+                    const fee = parseFloat(delivery.fee);
+                    if (delivery.store === "Cia do Chopp") {
+                        ciaDoChoppOrders++;
+                        ciaDoChoppFees += fee;
+                    } else if (delivery.store === "Pizzaria") {
+                        pizzariaOrders++;
+                        pizzariaFees += fee;
+                    } else if (delivery.store === "Adega") { // Adiciona lógica para Adega
+                        adegaOrders++;
+                        adegaFees += fee;
+                    }
+                    grandTotalOrders++;
+                    grandTotalFees += fee;
+                });
+
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Relatório de Totais - ${motoboyName}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+                            .print-area {
+                                padding: 20px;
+                                box-sizing: border-box;
+                            }
+                            .print-header {
+                                text-align: center;
+                                margin-bottom: 20px;
+                            }
+                            .summary-section {
+                                margin-bottom: 15px;
+                                border: 1px solid #eee;
+                                padding: 10px;
+                                border-radius: 5px;
+                            }
+                            .summary-section h4 {
+                                margin-top: 0;
+                                margin-bottom: 10px;
+                                color: #333;
+                            }
+                            .summary-item {
+                                display: flex;
+                                justify-content: space-between;
+                                padding: 3px 0;
+                                font-size: 14px;
+                            }
+                            .grand-total {
+                                text-align: right;
+                                margin-top: 20px;
+                                font-size: 16px;
+                                font-weight: bold;
+                                padding-top: 10px;
+                                border-top: 2px solid #000;
+                            }
+                            .print-signature {
+                                margin-top: 80px;
+                                text-align: center;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="print-area">
+                            <h2 class="print-header">Relatório de Totais por Loja</h2>
+                            <h3 class="print-header">Motoboy: ${motoboyName}</h3>
+                            <p class="print-header">Data de Impressão: ${currentDateTimeText}</p>
+
+                            <div class="summary-section">
+                                <h4>Cia do Chopp</h4>
+                                <div class="summary-item">
+                                    <span>Total de Pedidos:</span>
+                                    <span>${ciaDoChoppOrders}</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span>Total de Taxas:</span>
+                                    <span>R$ ${ciaDoChoppFees.toFixed(2).replace('.', ',')}</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-section">
+                                <h4>Pizzaria</h4>
+                                <div class="summary-item">
+                                    <span>Total de Pedidos:</span>
+                                    <span>${pizzariaOrders}</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span>Total de Taxas:</span>
+                                    <span>R$ ${pizzariaFees.toFixed(2).replace('.', ',')}</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-section">
+                                <h4>Adega</h4>
+                                <div class="summary-item">
+                                    <span>Total de Pedidos:</span>
+                                    <span>${adegaOrders}</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span>Total de Taxas:</span>
+                                    <span>R$ ${adegaFees.toFixed(2).replace('.', ',')}</span>
+                                </div>
+                            </div>
+
+                            <div class="grand-total">
+                                <div class="summary-item">
+                                    <span>Total Geral de Pedidos:</span>
+                                    <span>${grandTotalOrders}</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span>Total Geral de Taxas:</span>
+                                    <span>R$ ${grandTotalFees.toFixed(2).replace('.', ',')}</span>
+                                </div>
+                            </div>
+
+                            <div class="print-signature">
+                                <p>_________________________________________</p>
+                                <p>Assinatura do Motoboy</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            }
+            
+            // Event listener para o botão "Imprimir Tudo" (abre modal de data)
+            printAllBtn.addEventListener('click', function() {
+                document.getElementById('printDateModal').style.display = 'flex';
+            });
+
+            // Event listener para o botão "Cancelar" no modal de impressão
+            document.getElementById('cancelPrintDateBtn').addEventListener('click', function() {
+                document.getElementById('printDateModal').style.display = 'none';
+                document.getElementById('startDateInput').value = '';
+                document.getElementById('endDateInput').value = '';
+            });
+
+            // Event listener para o botão "Imprimir Selecionado" no modal de impressão (com filtro de data)
+            document.getElementById('confirmPrintDateBtn').addEventListener('click', function() {
+                const startDateStr = document.getElementById('startDateInput').value;
+                const endDateStr = document.getElementById('endDateInput').value;
+                const activeStoreFilter = storeFilterSelect.value; // Obtém o filtro de loja ativo
+
+                let filteredDeliveries = [];
+                let dateRangeText = "Todo o Período"; // Texto padrão para o relatório
+
+                // Lógica de filtragem por data e loja
+                const tempFilteredByDate = deliveries.filter(delivery => {
+                    // Parse the date string from "Dia da semana, DD/MM/YYYY HH:MM" to a Date object for comparison
+                    const parts = delivery.date.split(' ');
+                    const datePart = parts[1]; // DD/MM/YYYY
+                    const timePart = parts[2]; // HH:MM
+                    
+                    const [day, month, year] = datePart.split('/').map(Number);
+                    const [hours, minutes] = timePart ? timePart.split(':').map(Number) : [0, 0]; 
+                    const deliveryDate = new Date(year, month - 1, day, hours, minutes);
+
+                    const start = startDateStr ? new Date(startDateStr + 'T00:00:00') : null;
+                    const end = endDateStr ? new Date(endDateStr + 'T23:59:59') : null;
+
+                    const isDateMatch = (!start || deliveryDate >= start) && (!end || deliveryDate <= end);
+                    const isStoreMatch = (activeStoreFilter === 'all' || (delivery.store && delivery.store === activeStoreFilter));
+
+                    return isDateMatch && isStoreMatch;
+                });
+                filteredDeliveries = tempFilteredByDate;
+
+
+                if (startDateStr && endDateStr) {
+                    dateRangeText = `Período: ${startDateStr.split('-').reverse().join('/')} a ${endDateStr.split('-').reverse().join('/')}`;
+                } else if (startDateStr) {
+                    dateRangeText = `Data: ${startDateStr.split('-').reverse().join('/')}`;
+                }
+
+                performPrintAll(filteredDeliveries, dateRangeText, activeStoreFilter); // Passa o filtro de loja para a função de impressão
+                document.getElementById('printDateModal').style.display = 'none'; // Oculta o modal
+                document.getElementById('startDateInput').value = ''; // Limpa campos de data
+                document.getElementById('endDateInput').value = '';
+            });
+
+            // Event listener para o botão "Imprimir Tudo (Sem Data)" no modal de impressão
+            document.getElementById('printAllWithoutDateBtn').addEventListener('click', function() {
+                const activeStoreFilter = storeFilterSelect.value; // Obtém o filtro de loja ativo
+                const filteredDeliveries = deliveries.filter(d => activeStoreFilter === 'all' || (d.store && d.store === activeStoreFilter));
+                performPrintAll(filteredDeliveries, "Todo o Período", activeStoreFilter); // Imprime todas as entregas sem filtro, mas respeitando o filtro de loja
+                document.getElementById('printDateModal').style.display = 'none';
+                document.getElementById('startDateInput').value = '';
+                document.getElementById('endDateInput').value = '';
+            });
+
+            // Função para gerar e imprimir um relatório completo de todas as entregas (ou filtradas)
+            function performPrintAll(dataToPrint, dateRangeText, storeFilter) {
+                const motoboys = ["MACIEL", "JOAS", "LEO", "PEDRO AUGUSTO", "IFOOD", "JONAS", "WESLEY", "FELIPE"];
+                let overallTotal = 0; // Total geral de todas as taxas
+                const summary = {}; // Objeto para armazenar o resumo por motoboy
+
+                // Sort dataToPrint by date (chronologically)
+                dataToPrint.sort((a, b) => {
+                    const parseDateString = (dateStr) => {
+                        const parts = dateStr.split(' ');
+                        const datePart = parts[1]; // DD/MM/YYYY
+                        const timePart = parts[2]; // HH:MM
+                        const [day, month, year] = datePart.split('/').map(Number);
+                        const [hours, minutes] = timePart ? timePart.split(':').map(Number) : [0, 0];
+                        return new Date(year, month - 1, day, hours, minutes);
+                    };
+                    return parseDateString(a.date) - parseDateString(b.date);
+                });
+
+                // Group deliveries by date first
+                const deliveriesByDate = dataToPrint.reduce((acc, delivery) => {
+                    const dateOnly = delivery.date.split(' ')[1]; // DD/MM/YYYY
+                    if (!acc[dateOnly]) {
+                        acc[dateOnly] = {};
+                    }
+                    if (!acc[dateOnly][delivery.motoboy]) {
+                        acc[dateOnly][delivery.motoboy] = [];
+                    }
+                    acc[dateOnly][delivery.motoboy].push(delivery);
+                    return acc;
+                }, {});
+
+                const sortedDates = Object.keys(deliveriesByDate).sort((a, b) => {
+                    const [dayA, monthA, yearA] = a.split('/').map(Number);
+                    const [dayB, monthB, yearB] = b.split('/').map(Number);
+                    const dateA = new Date(yearA, monthA - 1, dayA);
+                    const dateB = new Date(yearB, monthB - 1, dayB);
+                    return dateA - dateB;
+                });
+
+                let mainTableBodyHtml = '';
+                sortedDates.forEach(date => {
+                    mainTableBodyHtml += '<tr>';
+                    mainTableBodyHtml += `<td>${date}</td>`; // Date column
+
+                    motoboys.forEach(motoboy => {
+                        const deliveriesForMotoboyOnDate = deliveriesByDate[date]?.[motoboy] || [];
+                        let cellContent = '';
+                        let dailyMotoboyTotal = 0;
+
+                        deliveriesForMotoboyOnDate.forEach(delivery => {
+                            const timeOnly = delivery.date.split(' ')[2]; // HH:MM
+                            cellContent += `
+                                <div class="print-delivery-item">
+                                    <span>Pedido: ${delivery.orderNumber} (${delivery.store}) - ${timeOnly}</span>
+                                    <span class="print-delivery-fee">R$ ${parseFloat(delivery.fee).toFixed(2).replace('.', ',')}</span>
+                                </div>
+                            `;
+                            dailyMotoboyTotal += parseFloat(delivery.fee);
+                        });
+
+                        if (deliveriesForMotoboyOnDate.length > 0) {
+                            cellContent += `
+                                <div class="print-total-row">
+                                    Total: R$ ${dailyMotoboyTotal.toFixed(2).replace('.', ',')}
+                                </div>
+                            `;
+                        }
+                        mainTableBodyHtml += `<td>${cellContent}</td>`;
+                    });
+                    mainTableBodyHtml += '</tr>';
+                });
+
+                // Calculate overall totals and summary for all dataToPrint
+                dataToPrint.forEach(delivery => {
+                    overallTotal += parseFloat(delivery.fee);
+                    if (!summary[delivery.motoboy]) {
+                        summary[delivery.motoboy] = { orders: 0, totalFee: 0 };
+                    }
+                    summary[delivery.motoboy].orders++;
+                    summary[delivery.motoboy].totalFee += parseFloat(delivery.fee);
+                });
+
+                // Constrói a tabela de resumo por entregador
+                let summaryTableHtml = `
+                    <h3 class="summary-table-header">Resumo por Entregador (Total Geral)</h3>
+                    <table class="print-table" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                        <thead>
+                            <tr>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: left;">Motoboy</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: right;">Total de Pedidos</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: right;">Total de Taxas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                for (const motoboy of motoboys) { 
+                    const data = summary[motoboy] || { orders: 0, totalFee: 0 };
+                    summaryTableHtml += `
+                            <tr>
+                                <td>${motoboy}</td>
+                                <td style="text-align: right;">${data.orders}</td>
+                                <td style="text-align: right;">R$ ${data.totalFee.toFixed(2).replace('.', ',')}</td>
+                            </tr>
+                    `;
+                }
+                summaryTableHtml += `
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">Total Geral:</td>
+                                <td style="text-align: right; font-weight: bold;">R$ ${overallTotal.toFixed(2).replace('.', ',')}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                `;
+
+                // Obtém a data e hora atual para o rodapé do relatório, incluindo o dia da semana
+                const today = new Date();
+                const currentDateTimeText = today.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + today.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+                // Abre uma nova janela para impressão e insere o HTML completo do relatório
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Relatório Completo de Entregas</title>
+                        <style>
+                            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+                            .print-area {
+                                width: 100%;
+                                padding: 0;
+                                margin: 0;
+                                box-sizing: border-box;
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                table-layout: fixed; 
+                            }
+                            th, td {
+                                border: 1px solid #000;
+                                padding: 8px;
+                                text-align: left;
+                                vertical-align: top;
+                                word-wrap: break-word; 
+                            }
+                            th {
+                                background-color: #f2f2f2;
+                                font-weight: 600;
+                            }
+                            tr:nth-child(even) {
+                                background-color: #f9f9f9;
+                            }
+                            .print-individual-item {
+                                display: flex;
+                                flex-direction: column;
+                                padding: 8px 0;
+                                border-bottom: 1px dotted #ccc;
+                                margin-bottom: 5px;
+                            }
+                            .print-individual-item:last-of-type {
+                                border-bottom: none;
+                            }
+                            .print-individual-item span {
+                                font-size: 12px;
+                                margin-bottom: 2px;
+                            }
+                            .print-individual-item .item-fee {
+                                font-weight: bold;
+                                text-align: right;
+                                margin-top: 5px;
+                                font-size: 13px;
+                            }
+                            .total-overall {
+                                text-align: right;
+                                margin-top: 20px;
+                                font-size: 16px;
+                                font-weight: bold;
+                                padding-top: 10px;
+                                border-top: 2px solid #000;
+                            }
+                            h2 {
+                                text-align: center;
+                                margin-bottom: 20px;
+                                color: #2c3e50;
+                            }
+                            .print-header-info {
+                                text-align: center;
+                                margin-bottom: 20px;
+                            }
+                            .print-date-info { /* Nova classe para a data/hora de geração */
+                                text-align: center;
+                                margin-bottom: 10px;
+                                font-size: 14px;
+                                color: #555;
+                            }
+                            .summary-table-header {
+                                text-align: center;
+                                margin-top: 30px;
+                                margin-bottom: 15px;
+                            }
+                            /* Ajuste das larguras das colunas para o relatório impresso */
+                            .motoboy-column-print { width: 12.5%; } /* 100% / 8 motoboys */
+
+                            /* New styles for grouped print report */
+                            .motoboy-report-section {
+                                margin-bottom: 25px;
+                                padding-bottom: 15px;
+                                border-bottom: 1px solid #ddd;
+                            }
+                            .motoboy-section-header {
+                                text-align: left;
+                                margin-top: 0;
+                                margin-bottom: 10px;
+                                color: #2c3e50;
+                                font-size: 18px;
+                                border-bottom: 2px solid #3498db;
+                                padding-bottom: 5px;
+                            }
+                            .motoboy-deliveries-list {
+                                margin-left: 10px;
+                            }
+                            .motoboy-subtotal {
+                                text-align: right;
+                                font-weight: bold;
+                                margin-top: 10px;
+                                padding-top: 5px;
+                                border-top: 1px dashed #ccc;
+                            }
+                            /* Styles for the main print table (like spreadsheet) */
+                            .print-table-main {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-top: 20px;
+                            }
+                            .print-table-main th, .print-table-main td {
+                                border: 1px solid #000;
+                                padding: 8px;
+                                text-align: left;
+                                vertical-align: top;
+                                word-wrap: break-word;
+                            }
+                            .print-table-main th {
+                                background-color: #f2f2f2;
+                                font-weight: bold;
+                            }
+                            .print-table-main tr:nth-child(even) {
+                                background-color: #f9f9f9;
+                            }
+                            .print-delivery-item {
+                                display: flex;
+                                flex-direction: column; /* Stack items vertically */
+                                padding: 4px 0;
+                                border-bottom: 1px dotted #e0e0e0;
+                                margin-bottom: 4px;
+                            }
+                            .print-delivery-item:last-of-type {
+                                border-bottom: none;
+                                margin-bottom: 0;
+                            }
+                            .print-delivery-item span {
+                                font-size: 11px; /* Smaller font for individual items */
+                            }
+                            .print-delivery-item .print-delivery-fee {
+                                font-weight: bold;
+                                text-align: right;
+                                font-size: 11px;
+                            }
+                            .print-total-row {
+                                font-weight: bold;
+                                background-color: #fffbe7;
+                                border-top: 1px solid #ccc;
+                                margin-top: 5px;
+                                padding-top: 5px;
+                                text-align: right;
+                                font-size: 12px;
+                            }
+                            .overall-grand-total {
+                                text-align: right;
+                                margin-top: 30px;
+                                font-size: 18px;
+                                font-weight: bold;
+                                padding-top: 15px;
+                                border-top: 3px double #000;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="print-area">
+                            <h2 class="print-header-info">Relatório Completo de Entregas</h2>
+                            <h3 class="print-header-info">${dateRangeText}</h3>
+                            ${storeFilter !== 'all' ? `<h3 class="print-header-info">Loja: ${storeFilter}</h3>` : ''}
+                            <p class="print-date-info">Gerado em: ${currentDateTimeText}</p>
+                            
+                            <table class="print-table-main">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        ${motoboys.map(m => `<th>${m}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${mainTableBodyHtml}
+                                </tbody>
+                            </table>
+
+                            <div class="overall-grand-total">
+                                Total Geral de Todas as Entregas: R$ ${overallTotal.toFixed(2).replace('.', ',')}
+                            </div>
+
+                            ${summaryTableHtml}
+                        </div>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            }
+
+            // Função para exportar os dados do aplicativo para um arquivo JSON (Blob)
+            async function exportDeliveriesToBlob() {
+                if (!userId) {
+                    showCustomMessageBox('Você precisa estar logado para exportar dados.', 'alert');
+                    return null;
+                }
+
+                try {
+                    const querySnapshot = await getDocs(deliveriesCollectionRef);
+                    const dataToExport = [];
+                    querySnapshot.forEach(doc => {
+                        dataToExport.push(doc.data());
+                    });
+
+                    if (dataToExport.length === 0) {
+                        showCustomMessageBox('Não há dados para exportar.', 'alert');
+                        return null;
+                    }
+
+                    const dataStr = JSON.stringify(dataToExport, null, 2); // Converte o array para string JSON formatada
+                    const blob = new Blob([dataStr], { type: 'application/json' }); // Cria um Blob com os dados
+                    const date = new Date();
+                    // Gera um nome de arquivo único com a data
+                    const fileName = `deliveries_backup_${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}.json`;
+                    return { blob, fileName };
+                } catch (error) {
+                    console.error("Erro ao exportar dados do Firestore: ", error);
+                    showCustomMessageBox('Erro ao exportar dados. Tente novamente.', 'alert');
+                    return null;
+                }
+            }
+
+            // Função para acionar o download do arquivo de backup
+            function downloadBackup() {
+                const exportedData = exportDeliveriesToBlob(); // exportDeliveriesToBlob agora é assíncrona
+                exportedData.then(result => {
+                    if (result) {
+                        const url = URL.createObjectURL(result.blob); // Cria uma URL para o Blob
+                        const a = document.createElement('a'); // Cria um elemento <a> temporário
+                        a.href = url;
+                        a.download = result.fileName; // Define o nome do arquivo para download
+                        document.body.appendChild(a);
+                        a.click(); // Simula um clique para iniciar o download
+                        document.body.removeChild(a); // Remove o elemento <a>
+                        URL.revokeObjectURL(url); // Libera a URL do Blob
+                        showSuccessMessage('Arquivo de backup baixado com sucesso para sua pasta de downloads: ' + result.fileName); 
+                    }
+                });
+            }
+
+            // Função para importar dados de um arquivo JSON para o aplicativo
+            function importDeliveries(event) {
+                if (!userId) {
+                    showCustomMessageBox('Você precisa estar logado para importar dados.', 'alert');
+                    importFileInput.value = '';
+                    return;
+                }
+
+                const file = event.target.files[0];
+                if (!file) {
+                    return;
+                }
+
+                // Adiciona verificação do tipo de arquivo para garantir que é JSON
+                if (file.type !== 'application/json') {
+                    showCustomMessageBox('Por favor, selecione um arquivo JSON válido (.json).', 'alert');
+                    importFileInput.value = ''; // Limpa o input de arquivo
+                    return;
+                }
+
+                const reader = new FileReader(); // Cria um FileReader para ler o conteúdo do arquivo
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result); // Converte o conteúdo do arquivo para objeto JSON
+                        // Valida o formato dos dados importados
+                        if (Array.isArray(importedData) && importedData.every(item => 
+                            item.date && item.motoboy && item.orderNumber !== undefined && item.fee !== undefined)) {
+                            
+                            showCustomMessageBox("Deseja substituir os dados atuais ou adicionar os novos dados aos existentes?\n\nConfirmar para SUBSTITUIR (apaga os dados atuais)\nCancelar para ADICIONAR (mantém os dados atuais e insere os novos)", 'confirm', async (result) => {
+                                try {
+                                    if (result) {
+                                        // Substituir: primeiro apaga tudo, depois adiciona os novos
+                                        const snapshot = await getDocs(deliveriesCollectionRef);
+                                        const deletePromises = [];
+                                        snapshot.forEach((doc) => {
+                                            deletePromises.push(deleteDoc(doc.ref));
+                                        });
+                                        await Promise.all(deletePromises);
+                                        showSuccessMessage('Dados atuais removidos. Importando novos dados...');
+                                    }
+
+                                    // Adiciona novos dados, evitando duplicatas
+                                    const currentDeliveriesSet = new Set(deliveries.map(d => `${d.date}-${d.motoboy}-${d.orderNumber}-${d.store}`));
+                                    const addPromises = [];
+                                    for (const delivery of importedData) {
+                                        // Garante que a propriedade 'store' exista nos dados importados
+                                        if (!delivery.store) {
+                                            delivery.store = "Cia do Chopp"; 
+                                        }
+                                        // If 'date' is only date or date and time without weekday, convert it to include weekday for consistency
+                                        if (delivery.date && delivery.date.split(' ').length <= 2) {
+                                            const [datePart, timePart] = delivery.date.split(' ');
+                                            const [day, month, year] = datePart.split('/').map(Number);
+                                            const [hours, minutes] = timePart ? timePart.split(':').map(Number) : [0, 0];
+                                            const tempDate = new Date(year, month - 1, day, hours, minutes);
+                                            delivery.date = tempDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + tempDate.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                                        }
+
+                                        if (!currentDeliveriesSet.has(`${delivery.date}-${delivery.motoboy}-${delivery.orderNumber}-${delivery.store}`)) {
+                                            addPromises.push(addDoc(deliveriesCollectionRef, delivery));
+                                        }
+                                    }
+                                    await Promise.all(addPromises);
+                                    showSuccessMessage('Dados importados com sucesso!');
+                                } catch (error) {
+                                    console.error("Erro durante a importação de dados: ", error);
+                                    showCustomMessageBox('Erro ao importar dados. Tente novamente.', 'alert');
+                                } finally {
+                                    importFileInput.value = ''; // Limpa o input de arquivo
+                                }
+                            });
+                        } else {
+                            showCustomMessageBox('Arquivo JSON inválido ou formato de dados incorreto.', 'alert');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao ler ou parsear o arquivo:', error);
+                        showCustomMessageBox('Erro ao ler o arquivo. Certifique-se de que é um arquivo JSON válido e não está corrompido.', 'alert'); // Mensagem de erro melhorada
+                    } finally {
+                        importFileInput.value = ''; // Limpa o input de arquivo
+                    }
+                };
+                reader.onerror = function() {
+                    showCustomMessageBox('Erro ao carregar o arquivo.', 'alert');
+                    importFileInput.value = '';
+                };
+                reader.readAsText(file); // Lê o conteúdo do arquivo como texto
+            }
+
+            // Função para limpar os destaques da tabela
+            function clearHighlights() {
+                document.querySelectorAll('.highlighted-delivery').forEach(el => {
+                    el.classList.remove('highlighted-delivery');
+                });
+            }
+
+            // Event listeners para os botões de ação do aplicativo
+            exportDataBtn.addEventListener('click', downloadBackup); 
+            importDataBtn.addEventListener('click', () => importFileInput.click()); // Aciona o clique no input de arquivo oculto
+            importFileInput.addEventListener('change', importDeliveries); // Ouve a seleção de arquivo para importar
+
+            // Event listeners para a funcionalidade de busca de pedidos
+            searchOrderBtn.addEventListener('click', performSearch);
+            searchOrderInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') { // Permite pesquisar pressionando Enter
+                    performSearch();
+                }
+            });
+
+            // Função para realizar a busca de pedidos
+            function performSearch() {
+                const searchTerm = searchOrderInput.value.trim();
+                clearHighlights(); // Limpa destaques anteriores
+                searchResultsDiv.style.display = 'none'; 
+                searchResultsDiv.classList.remove('not-found'); 
+                searchResultsDiv.innerHTML = ''; 
+
+                if (!searchTerm) {
+                    searchResultsDiv.textContent = 'Por favor, digite um número de pedido para pesquisar.';
+                    searchResultsDiv.classList.add('not-found');
+                    searchResultsDiv.style.display = 'block';
+                    return;
+                }
+
+                // Filtra as entregas para encontrar o termo pesquisado
+                const foundDeliveries = deliveries.filter(delivery => 
+                    delivery.orderNumber === searchTerm
+                );
+
+                if (foundDeliveries.length > 0) {
+                    let resultHtml = `Pedido ${searchTerm} encontrado:<br>`;
+                    foundDeliveries.forEach(d => {
+                        resultHtml += `- ${d.motoboy} em ${d.date} na loja ${d.store} (R$ ${parseFloat(d.fee).toFixed(2).replace('.', ',')}) `;
+                        const whatsappNumber = WHATSAPP_NUMBERS[d.motoboy]; // Obtém o número do WhatsApp do motoboy
+                        if (whatsappNumber) {
+                            // Adiciona o ícone do WhatsApp se houver um número
+                            resultHtml += `<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/1200px-WhatsApp.svg.png" class="whatsapp-icon" alt="WhatsApp" data-order="${d.orderNumber}" data-motoboy="${d.motoboy}" data-whatsapp-number="${whatsappNumber}">`;
+                        }
+                        resultHtml += `<br>`;
+
+                        // Destaca o item correspondente na tabela
+                        document.querySelectorAll('.delivery-item').forEach(tableItem => {
+                            const tableOrderNumber = tableItem.getAttribute('data-order-number');
+                            const tableMotoboy = tableItem.getAttribute('data-motoboy');
+                            const tableFullDate = tableItem.getAttribute('data-full-date');
+                            const tableStore = tableItem.getAttribute('data-store');
+
+                            if (tableOrderNumber === d.orderNumber &&
+                                tableMotoboy === d.motoboy &&
+                                tableFullDate === d.date &&
+                                tableStore === d.store) {
+                                tableItem.classList.add('highlighted-delivery');
+                            }
+                        });
+                    });
+                    
+                    searchResultsDiv.innerHTML = resultHtml;
+                    searchResultsDiv.style.display = 'block';
+
+                    // Adiciona event listeners para os ícones do WhatsApp
+                    searchResultsDiv.querySelectorAll('.whatsapp-icon').forEach(icon => {
+                        icon.addEventListener('click', function() {
+                            const order = this.getAttribute('data-order');
+                            const motoboy = this.getAttribute('data-motoboy');
+                            const number = this.getAttribute('data-whatsapp-number');
+                            
+                            if (number) {
+                                const message = encodeURIComponent(`Olá ${motoboy}, tudo bem? Gostaria de saber o status de entrega do pedido: ${order}.`);
+                                const whatsappUrl = `https://wa.me/${number}?text=${message}`;
+                                window.open(whatsappUrl, '_blank'); // Abre o link do WhatsApp
+                            }
+                        });
+                    });
+
+                } else {
+                    searchResultsDiv.textContent = `Pedido "${searchTerm}" não encontrado.`;
+                    searchResultsDiv.classList.add('not-found');
+                    searchResultsDiv.style.display = 'block';
+                }
+            }
+
+            // Event listener para o botão "Limpar Pesquisa"
+            clearSearchBtn.addEventListener('click', function() {
+                searchOrderInput.value = ''; 
+                searchResultsDiv.innerHTML = ''; 
+                searchResultsDiv.style.display = 'none'; 
+                searchResultsDiv.classList.remove('not-found'); 
+                clearHighlights(); // Limpa destaques quando a pesquisa é limpa
+            });
+
+            // --- Lógica de Autenticação Firebase ---
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    welcomeUserP.textContent = `Bem-vindo(a), ${user.email || 'Usuário'}!`; // Alterado para "Usuário" já que anônimo será desabilitado
+                    loginSection.style.display = 'none';
+                    mainAppSection.style.display = 'block';
+                    setupFirestoreListener(); // Configura o listener do Firestore após o login
+                } else {
+                    userId = null;
+                    loginSection.style.display = 'flex'; // Use flex para centralizar
+                    loginSection.style.flexDirection = 'column';
+                    mainAppSection.style.display = 'none';
+                    if (unsubscribeFromDeliveries) {
+                        unsubscribeFromDeliveries(); // Desinscreve do Firestore quando o usuário faz logout
+                        unsubscribeFromDeliveries = null;
+                    }
+                    deliveries = []; // Limpa os dados na UI ao fazer logout
+                    updateTable();
+                    updatePrintAndExportButtonState();
+                }
+            });
+
+            // Removido o login anônimo inicial. A tela de login será exibida por padrão.
+            // try {
+            //     await signInAnonymously(auth);
+            //     console.log("Autenticado anonimamente.");
+            // } catch (anonError) {
+            //     console.error("Erro ao autenticar anonimamente:", anonError);
+            //     loginErrorDiv.textContent = "Erro de autenticação inicial. Tente novamente mais tarde.";
+            //     loginErrorDiv.style.display = 'block';
+            // }
+
+            loginBtn.addEventListener('click', async () => {
+                const email = loginEmailInput.value;
+                const password = loginPasswordInput.value;
+                loginErrorDiv.style.display = 'none';
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showSuccessMessage('Login bem-sucedido!');
+                } catch (error) {
+                    console.error("Erro de login:", error);
+                    let errorMessage = "Erro ao fazer login. Verifique seu e-mail e senha.";
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                        errorMessage = "E-mail ou senha inválidos.";
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMessage = "Formato de e-mail inválido.";
+                    }
+                    loginErrorDiv.textContent = errorMessage;
+                    loginErrorDiv.style.display = 'block';
+                }
+            });
+
+            registerBtn.addEventListener('click', async () => {
+                const email = loginEmailInput.value;
+                const password = loginPasswordInput.value;
+                loginErrorDiv.style.display = 'none';
+                try {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showSuccessMessage('Registro bem-sucedido! Você está logado(a).');
+                } catch (error) {
+                    console.error("Erro de registro:", error);
+                    let errorMessage = "Erro ao registrar. Tente novamente.";
+                    if (error.code === 'auth/email-already-in-use') {
+                        errorMessage = "Este e-mail já está em uso.";
+                    } else if (error.code === 'auth/weak-password') {
+                        errorMessage = "A senha deve ter pelo menos 6 caracteres.";
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMessage = "Formato de e-mail inválido.";
+                    }
+                    loginErrorDiv.textContent = errorMessage;
+                    loginErrorDiv.style.display = 'block';
+                }
+            });
+
+            logoutBtn.addEventListener('click', async () => {
+                try {
+                    await signOut(auth);
+                    showSuccessMessage('Logout realizado com sucesso.');
+                } catch (error) {
+                    console.error("Erro ao fazer logout:", error);
+                    showCustomMessageBox('Erro ao fazer logout. Tente novamente.', 'alert');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

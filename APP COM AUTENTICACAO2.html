@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Pedidos Motoboy - Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f9;
+        }
+        .modal {
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal-active {
+            opacity: 1;
+            visibility: visible;
+        }
+        /* Define a transição de altura para o container de busca */
+        #searchContainer {
+            transition: max-height 0.5s ease-in-out;
+        }
+        /* Estilos para o Dropdown */
+        .dropdown-menu {
+            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+            transform: translateY(-10px);
+        }
+        .dropdown-active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto relative">
+        <header class="text-center mb-10 relative">
+            <h1 class="text-4xl font-extrabold text-indigo-700">Controle de Entregas (Firebase)</h1>
+            <p class="text-gray-600 mt-2">Gerencie Motoboys, Lojas e Pedidos. Dados salvos em tempo real no Firebase Firestore.</p>
+            
+            <div class="absolute top-0 right-0 z-40">
+                <button id="adminMenuButton" class="bg-gray-200 hover:bg-gray-300 text-gray-700 p-3 rounded-full shadow-lg transition duration-200" title="Opções de Administração">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M11.49 3.17c-.38-.21-.82-.3-.13-.3a1 1 0 00-.77 1.84l1.17.65a1 1 0 001.3-.65l.07-.13c.18-.34-.07-.72-.45-.93zM10 18a8 8 0 100-16 8 8 0 000 16z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M10 12a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M12.9 5.86a1 1 0 11-1.8 1.14l.8.8c.4.4.74.87.97 1.39l.06.13c.09.2.14.41.14.62V12a1 1 0 11-2 0v-1.63c-.1-.2-.25-.37-.43-.52l-.66-.56a1 1 0 01.32-.34l.88-.49c.38-.21.5-.68.27-1.06a1 1 0 011.06-.27zM7.1 5.86a1 1 0 10-1.8-1.14l.8.8c.4.4.74.87.97 1.39l.06.13c.09.2.14.41.14.62V12a1 1 0 10-2 0v-1.63c-.1-.2-.25-.37-.43-.52l-.66-.56a1 1 0 00.32-.34l.88-.49c.38-.21.5-.68.27-1.06a1 1 0 001.06-.27z" />
+                    </svg>
+                </button>
+                
+                <div id="adminDropdownMenu" class="dropdown-menu absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-2xl ring-1 ring-black ring-opacity-5 opacity-0 invisible z-50">
+                    <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="adminMenuButton">
+                        <button id="openSetupModal" class="flex items-center w-full px-4 py-3 text-sm text-indigo-600 hover:bg-gray-100 hover:text-indigo-800 transition duration-150 rounded-t-lg" role="menuitem">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/></svg>
+                            Gerenciar Cadastros
+                        </button>
+                        <button id="openExportImportModal" class="flex items-center w-full px-4 py-3 text-sm text-purple-600 hover:bg-gray-100 hover:text-purple-800 transition duration-150" role="menuitem">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            Importar / Exportar Dados
+                        </button>
+                        <button id="openClearModal" class="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-gray-100 hover:text-red-800 transition duration-150 rounded-b-lg" role="menuitem">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                            Limpar Todos os Dados
+                        </button>
+                    </div>
+                </div>
+            </div>
+            </header>
+
+        <div class="flex flex-col gap-4 mb-6">
+            
+            <div class="flex items-center justify-between w-full">
+                <div id="userInfo" class="text-sm text-gray-500 bg-white p-3 rounded-lg shadow w-full md:w-auto">
+                    <p>Status: <span class="text-gray-500 font-bold">Conectando ao Firebase...</span></p>
+                </div>
+                
+                <div id="logoutButtonContainer" style="display: none;" class="ml-4 flex-shrink-0">
+                    <button id="logoutButton" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg transition duration-300 text-sm">
+                        Sair
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="storeSelectionContainer" class="flex flex-wrap justify-center gap-3 mb-8 p-3 bg-gray-50 rounded-xl shadow-inner border border-gray-200">
+            <p class="text-sm text-gray-500 mt-2">Cadastre uma loja para começar.</p>
+        </div>
+
+
+        <div class="bg-white p-6 rounded-xl shadow-2xl mb-5">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Registrar Novo Pedido</h2>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <input type="text" id="orderNumberInput" placeholder="Digite o Número do Pedido" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" inputmode="numeric" pattern="[0-9]*">
+                <button id="startOrderButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow transition duration-300">
+                    Confirmar Pedido
+                </button>
+            </div>
+            <p id="statusMessage" class="mt-3 text-sm text-red-600"></p>
+        </div>
+        
+        <div class="mb-8 bg-white p-4 rounded-xl shadow-md">
+             <button id="toggleSearchButton" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-xl transition duration-300 flex justify-between items-center">
+                <span>Localizar Pedido na Planilha</span>
+                 <svg id="searchToggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform rotate-0 transition duration-300" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+
+            <div id="searchContainer" class="mt-4 transition-all duration-500 ease-in-out max-h-0 overflow-hidden">
+                <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex gap-2">
+                        <input type="text" id="searchInput" placeholder="Digite o número do pedido, loja ou motoboy para filtrar" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                        <button id="clearSearchButton" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow transition duration-300 flex-shrink-0 text-sm">
+                            Limpar Filtro
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-2xl">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Planilha de Pedidos Agrupados por Motoboy</h2>
+            
+            <div id="motoboyOrdersContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                </div>
+            
+            <p id="loadingText" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center" style="display: block;">Carregando pedidos...</p>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center p-4 z-[60] opacity-0 invisible">
+        <div class="bg-white rounded-xl shadow-3xl w-full max-w-sm p-6 relative">
+            <h3 class="text-2xl font-bold mb-4 text-indigo-700 text-center">Acesso ao Sistema</h3>
+            <p class="text-sm text-gray-600 mb-6 text-center">Entre com seu e-mail e senha cadastrados no Firebase.</p>
+
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label for="loginEmail" class="block text-sm font-medium text-gray-700">E-mail</label>
+                    <input type="email" id="loginEmail" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="loginPassword" class="block text-sm font-medium text-gray-700">Senha</label>
+                    <input type="password" id="loginPassword" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <button type="submit" id="loginButton" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow transition duration-300">
+                    Entrar
+                </button>
+                <p id="loginStatusMessage" class="mt-3 text-sm text-red-600 text-center"></p>
+            </form>
+        </div>
+    </div>
+    <div id="setupModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 opacity-0 invisible">
+        <div class="bg-white rounded-xl shadow-3xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold mb-4 text-blue-700">Configuração do Sistema</h3>
+            <p class="text-sm text-gray-500 mb-6">Os dados cadastrados aqui são salvos em tempo real no **Firebase** e vinculados ao seu ID de usuário.</p>
+
+            <div class="space-y-6">
+                <div>
+                    <h4 class="font-semibold text-lg border-b pb-1 mb-2">Cadastrar Loja</h4>
+                    <input type="text" id="storeNameInput" placeholder="Nome da Loja" class="w-full p-2 border rounded-lg mb-2">
+                    <button id="saveStore" class="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg text-sm w-full">Salvar Loja</button>
+                    <ul id="storesList" class="text-sm mt-2 space-y-1 max-h-24 overflow-y-auto p-1 border rounded-lg bg-gray-50"></ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-lg border-b pb-1 mb-2">Cadastrar Motoboy</h4>
+                    <input type="text" id="motoboyNameInput" placeholder="Nome do Motoboy" class="w-full p-2 border rounded-lg mb-2">
+                    <button id="saveMotoboy" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg text-sm w-full">Salvar Motoboy</button>
+                    <ul id="motoboysList" class="text-sm mt-2 space-y-1 max-h-24 overflow-y-auto p-1 border rounded-lg bg-gray-50"></ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-lg border-b pb-1 mb-2">Cadastrar Taxa (Valor Fixo)</h4>
+                    <input type="number" id="rateValueInput" placeholder="Valor (ex: 7.50)" step="0.01" class="w-full p-2 border rounded-lg mb-2">
+                    <button id="saveRate" class="bg-teal-500 hover:bg-teal-600 text-white p-2 rounded-lg text-sm w-full">Salvar Taxa Fixa</button>
+                    <ul id="ratesList" class="text-sm mt-2 space-y-1 max-h-24 overflow-y-auto p-1 border rounded-lg bg-gray-50"></ul>
+                </div>
+            </div>
+
+            <button id="closeSetupModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold">×</button>
+            <p id="setupStatus" class="mt-4 text-center text-sm text-green-600 font-semibold"></p>
+        </div>
+    </div>
+
+    <div id="motoboySelectModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 opacity-0 invisible">
+        <div class="bg-white rounded-xl shadow-3xl w-full max-w-sm p-6 relative">
+            <h3 class="text-2xl font-bold mb-4 text-blue-700">Selecione o Motoboy</h3>
+            <div id="motoboysSelection" class="space-y-3 max-h-80 overflow-y-auto p-2">
+                <p class="text-gray-500 text-sm">Carregando motoboys...</p>
+            </div>
+            <button onclick="window.closeModal('motoboySelectModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold">×</button>
+        </div>
+    </div>
+
+    <div id="rateSelectModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 opacity-0 invisible">
+        <div class="bg-white rounded-xl shadow-3xl w-full max-w-sm p-6 relative">
+            <h3 class="text-2xl font-bold mb-4 text-blue-700">Selecione o Valor da Taxa</h3>
+            
+            <div id="ratesSelection" class="space-y-3 max-h-64 overflow-y-auto p-2 border-b pb-4 mb-4">
+                <p class="text-gray-500 text-sm">Carregando taxas...</p>
+            </div>
+
+            <h4 class="font-semibold text-lg border-b pb-1 mb-2 text-gray-800">Taxa Avulsa</h4>
+            <div class="flex gap-2">
+                <input type="number" id="manualRateInput" placeholder="Digite o valor (ex: 12.00)" step="0.01" class="w-full p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                <button id="applyManualRate" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold p-2 rounded-lg text-sm transition duration-200 whitespace-nowrap">
+                    Lançar
+                </button>
+            </div>
+
+            <button onclick="window.closeModal('rateSelectModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold">×</button>
+        </div>
+    </div>
+
+    <div id="editOrderModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 opacity-0 invisible">
+        <div class="bg-white rounded-xl shadow-3xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold mb-4 text-blue-700">Editar Pedido</h3>
+            <form id="editOrderForm" class="space-y-4">
+                <div>
+                    <label for="editOrderNumber" class="block text-sm font-medium text-gray-700">Número do Pedido</label>
+                    <input type="text" id="editOrderNumber" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label for="editStoreSelect" class="block text-sm font-medium text-gray-700">Loja</label>
+                    <select id="editStoreSelect" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></select>
+                </div>
+
+                <div>
+                    <label for="editMotoboySelect" class="block text-sm font-medium text-gray-700">Motoboy</label>
+                    <select id="editMotoboySelect" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></select>
+                </div>
+                
+                <div>
+                    <label for="editFeeValue" class="block text-sm font-medium text-gray-700">Valor da Taxa (R$)</label>
+                    <input type="number" id="editFeeValue" step="0.01" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">A descrição da taxa original (Fixa ou Avulsa) será mantida.</p>
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-xl shadow transition duration-300">
+                    Salvar Alterações
+                </button>
+            </form>
+            <button onclick="window.closeModal('editOrderModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold">×</button>
+        </div>
+    </div>
+    
+    <div id="confirmDeleteModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 opacity-0 invisible">
+        <div class="bg-white rounded-xl shadow-3xl w-full max-w-sm p-6 relative text-center">
+            <svg class="mx-auto h-12 w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856a2 2 0 001.789-2.89l-6.923-11.537a2 2 0 00-3.578 0L3.3 18.11A2 2 0 005.062 21z"></path></svg>
+            <h3 class="text-xl font-bold mt-3 mb-2 text-gray-800">Confirmar Exclusão</h3>
+            <p class="text-gray-600 mb-6" id="deleteConfirmationMessage">Você tem certeza que deseja excluir o pedido?</p>
+            
+            <div class="flex justify-center space-x-4">
+                <button id="cancelDeleteButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-xl transition duration-300">
+                    Cancelar
+                </button>
+                <button id="confirmDeleteButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl shadow-md transition duration-300">
+                    Excluir Permanentemente
+                </button>
+            </div>
+            <button onclick="window.closeModal('confirmDeleteModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold">×</button>
+        </div>
+    </div>
+    
+    <div id="clearDataConfirmationModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 opacity-0 invisible">
+        <div class="bg-white rounded-xl shadow-3xl w-full max-w-sm p-6 relative text-center">
+            <svg class="mx-auto h-12 w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856a2 2 0 001.789-2.89l-6.923-11.537a2 2 0 00-3.578 0L3.3 18.11A2 2 0 005.062 21z"></path></svg>
+            <h3 class="text-xl font-bold mt-3 mb-2 text-gray-800">CUIDADO! Limpeza Total do Banco de Dados</h3>
+            <p class="text-gray-600 mb-6">Você tem certeza que deseja **limpar TODOS os dados** (Lojas, Motoboys, Pedidos) no Firebase? Esta ação é **irreversível**.</p>
+            
+            <div class="flex justify-center space-x-4">
+                <button id="cancelClearDataButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-xl transition duration-300">
+                    Cancelar
+                </button>
+                <button id="confirmClearDataButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl shadow-md transition duration-300">
+                    Limpar Tudo
+                </button>
+            </div>
+            <button onclick="window.closeModal('clearDataConfirmationModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold">×</button>
+        </div>
+    </div>
+    
+    <div id="dataTransferModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 opacity-0 invisible">
+        <div class="bg-white rounded-xl shadow-3xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold mb-4 text-blue-700">Transferência de Dados (JSON)</h3>
+            <p class="text-sm text-gray-500 mb-6">Importe ou exporte todos os seus cadastros (Lojas, Motoboys, Taxas e Pedidos) como um único arquivo JSON.</p>
+
+            <div class="space-y-6">
+                <div class="border p-4 rounded-lg bg-gray-50">
+                    <h4 class="font-semibold text-lg border-b pb-1 mb-2 text-indigo-700">1. Exportar Dados</h4>
+                    <p class="text-sm text-gray-600 mb-3">Baixe o arquivo JSON contendo todos os dados do seu usuário no Firebase (apenas dados privados).</p>
+                    <button id="exportDataButton" class="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-xl font-bold transition duration-300">
+                        Baixar Arquivo JSON de Backup
+                    </button>
+                </div>
+
+                <div class="border p-4 rounded-lg bg-gray-50">
+                    <h4 class="font-semibold text-lg border-b pb-1 mb-2 text-red-700">2. Importar Dados (Atenção!)</h4>
+                    <p class="text-sm text-red-600 mb-3 font-semibold">AVISO: A importação irá **apagar e substituir todos os seus dados atuais** no Firebase. Faça um backup antes de importar!</p>
+                    <input type="file" id="importFileInput" accept=".json" class="w-full p-3 border rounded-lg bg-white mb-3">
+                    <button id="importDataButton" class="w-full bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl font-bold transition duration-300" disabled>
+                        Importar e Sobrescrever Dados
+                    </button>
+                </div>
+            </div>
+
+            <button id="closeDataTransferModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold">×</button>
+        </div>
+    </div>
+    <div id="customAlert" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-xl text-white transition-transform duration-300 transform translate-x-full z-50" style="display: none;"></div>
+
+
+    <script type="module">
+        // Importa módulos do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, setDoc, deleteDoc, onSnapshot, collection, query, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // V A R I Á V E I S   G L O B A I S   (F I R E B A S E)
+        // ESTAS VARIÁVEIS SÃO INJETADAS AUTOMATICAMENTE PELO AMBIENTE.
+        const appId = '1:855652895555:web:86ff0017e15d2a35823df6'; // Usando o 'appId' fornecido para garantir o caminho
+const firebaseConfig = {
+  apiKey: "AIzaSyDeQcznFbHZduCPGZimiCbM8HrDuoHQF8I",
+  authDomain: "fastpedudosv3.firebaseapp.com",
+  projectId: "fastpedudosv3",
+  storageBucket: "fastpedudosv3.firebasestorage.app",
+  messagingSenderId: "855652895555",
+  appId: "1:855652895555:web:86ff0017e15d2a35823df6"
+};
+const initialAuthToken = null; // Mantemos 'null' para forçar a autenticação anônima (sem token customizado)
+
+        // Referências do Firebase
+        let db;
+        let auth;
+        let currentUserId = null;
+        let isAuthReady = false;
+
+        // V A R I Á V E I S   D E   E S T A D O
+        let stores = [];
+        let motoboys = [];
+        let rates = [];
+        let selectedStoreId = null; 
+        let editingOrderId = null; 
+        let orderIdToDelete = null; 
+        let allOrders = []; 
+        let currentSearchTerm = ''; 
+
+        // Estado do pedido em andamento
+        let currentOrder = {
+            number: null,
+            store: null, 
+            motoboy: null, 
+            rate: null 
+        };
+
+        // --- Funções Auxiliares de UI ---
+        
+        window.showAlert = (message, type = 'success') => {
+            const alertElement = document.getElementById('customAlert');
+            alertElement.textContent = message;
+            alertElement.style.display = 'block';
+            alertElement.classList.remove('bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-blue-500');
+
+            if (type === 'success') {
+                alertElement.classList.add('bg-green-500');
+            } else if (type === 'error') {
+                alertElement.classList.add('bg-red-500');
+            } else if (type === 'info') {
+                 alertElement.classList.add('bg-blue-500');
+            } else {
+                alertElement.classList.add('bg-yellow-500');
+            }
+
+            // Animação de entrada
+            setTimeout(() => alertElement.classList.remove('translate-x-full'), 10);
+            
+            // Animação de saída e ocultação
+            setTimeout(() => {
+                alertElement.classList.add('translate-x-full');
+                setTimeout(() => alertElement.style.display = 'none', 300);
+            }, 5000);
+        }
+
+        window.closeModal = (id) => {
+            document.getElementById(id).classList.remove('modal-active');
+            document.getElementById(id).classList.add('opacity-0', 'invisible');
+        }
+
+        window.openModal = (id) => {
+            document.getElementById(id).classList.remove('opacity-0', 'invisible');
+            document.getElementById(id).classList.add('modal-active');
+        }
+
+        // --- Funções do FIREBASE ---
+
+        /**
+         * Retorna a referência para uma coleção privada do usuário.
+         * Caminho: /artifacts/{appId}/users/{userId}/{collectionName}
+         */
+        const getCollectionRef = (collectionName) => {
+            if (!db || !currentUserId) {
+                console.error("Database ou UserId não está pronto.");
+                return null;
+            }
+            const userPath = `artifacts/${appId}/users/${currentUserId}/${collectionName}`;
+            return collection(db, userPath);
+        };
+        
+        /**
+         * Inicializa o Firebase, autentica o usuário e define os listeners.
+         */
+        const initializeFirebase = async () => {
+            if (!firebaseConfig) {
+                console.error("A configuração do Firebase está faltando.");
+                window.showAlert('Erro: Configuração do Firebase ausente. Verifique as variáveis globais.', 'error');
+                return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // Define o nível de log para debug
+                setLogLevel('Debug'); 
+                
+                // Tenta manter a sessão local (muito importante para Login/Senha)
+                await setPersistence(auth, browserLocalPersistence);
+
+                // 2. Listener de estado de autenticação
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        isAuthReady = true;
+                        
+                        // ESCONDE O MODAL DE LOGIN E MOSTRA O STATUS DE CONEXÃO
+                        window.closeModal('loginModal'); 
+                        document.getElementById('userInfo').innerHTML = `
+                            <p>Status: <span class="text-green-600 font-bold">Conectado (Firebase)</span></p>
+                            <p class="text-xs text-gray-400 truncate" title="${currentUserId}">ID do Usuário: ${currentUserId}</p>
+                        `;
+                        document.getElementById('logoutButtonContainer').style.display = 'block'; // Mostra o botão de Logout
+                        
+                        setupRealtimeListeners(); 
+                    } else {
+                        // SE NÃO ESTIVER LOGADO, MOSTRA O MODAL DE LOGIN
+                        currentUserId = null;
+                        isAuthReady = true; 
+                        document.getElementById('userInfo').innerHTML = `
+                            <p>Status: <span class="text-red-600 font-bold">Desconectado (Aguardando Login)</span></p>
+                        `;
+                        document.getElementById('logoutButtonContainer').style.display = 'none'; // Esconde o botão de Logout
+                        window.openModal('loginModal'); 
+                        setupRealtimeListeners(); // Ainda chama para iniciar os listeners, mas eles falharão até o login.
+                    }
+                });
+
+            } catch (e) {
+                console.error("Erro ao inicializar Firebase:", e);
+                window.showAlert('Erro grave ao conectar ao Firebase.', 'error');
+            }
+        };
+
+        /**
+         * Configura os listeners em tempo real para todas as coleções de dados.
+         */
+        const setupRealtimeListeners = () => {
+            // Se o usuário não está autenticado, os listeners serão configurados, 
+            // mas getCollectionRef retornará null e os onSnapshots falharão (que é o comportamento desejado até o login)
+            if (!isAuthReady || !db) return;
+
+            // Listener para Lojas
+            onSnapshot(getCollectionRef('stores'), (snapshot) => {
+                stores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Ajusta selectedStoreId se a loja sumiu ou se não há nenhuma selecionada
+                if (!selectedStoreId || !stores.find(s => s.id === selectedStoreId)) {
+                    selectedStoreId = stores.length > 0 ? stores[0].id : null;
+                }
+                renderStoreSelectionButtons();
+                renderSetupList('storesList', stores, 'store');
+            }, (error) => { console.error("Erro ao ouvir Lojas:", error); });
+            
+            // Listener para Motoboys
+            onSnapshot(getCollectionRef('motoboys'), (snapshot) => {
+                motoboys = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderSetupList('motoboysList', motoboys, 'motoboy');
+                renderSelectionButtons('motoboysSelection', motoboys, 'motoboy');
+            }, (error) => { console.error("Erro ao ouvir Motoboys:", error); });
+
+            // Listener para Taxas
+            onSnapshot(getCollectionRef('rates'), (snapshot) => {
+                rates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderSetupList('ratesList', rates, 'rate');
+                renderSelectionButtons('ratesSelection', rates, 'rate');
+            }, (error) => { console.error("Erro ao ouvir Taxas:", error); });
+
+            // Listener para Pedidos (Principal)
+            onSnapshot(getCollectionRef('orders'), (snapshot) => {
+                allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderMotoboyCards(allOrders, currentSearchTerm);
+                document.getElementById('loadingText').style.display = allOrders.length > 0 ? 'none' : 'block';
+            }, (error) => { console.error("Erro ao ouvir Pedidos:", error); });
+        };
+        
+        /**
+         * Limpa todos os dados do Firebase para o usuário atual (exclui coleções de dados).
+         */
+        window.clearAllData = async () => {
+            if (!db || !currentUserId) {
+                window.showAlert('Erro: O Firebase não está pronto ou o usuário não está autenticado.', 'error');
+                window.closeModal('clearDataConfirmationModal');
+                return;
+            }
+            
+            const collectionsToClear = ['stores', 'motoboys', 'rates', 'orders'];
+            window.closeModal('clearDataConfirmationModal');
+            window.showAlert('Iniciando limpeza de todos os dados...', 'info');
+
+            for (const collectionName of collectionsToClear) {
+                const colRef = getCollectionRef(collectionName);
+                if (!colRef) continue;
+
+                try {
+                    // Exclui documentos um por um (Firebase não tem exclusão de coleção em massa)
+                    const snapshot = await getDocs(colRef);
+                    const deletePromises = [];
+                    snapshot.docs.forEach((d) => {
+                        deletePromises.push(deleteDoc(doc(db, colRef.path, d.id)));
+                    });
+                    await Promise.all(deletePromises);
+                    console.log(`Coleção ${collectionName} limpa com ${snapshot.size} documentos.`);
+                } catch (e) {
+                    console.error(`Erro ao limpar a coleção ${collectionName}:`, e);
+                    window.showAlert(`Erro ao limpar a coleção ${collectionName}. Verifique as permissões.`, 'error');
+                }
+            }
+
+            // Reinicia o estado local
+            selectedStoreId = null;
+            currentSearchTerm = '';
+            // A UI será atualizada automaticamente pelos listeners (onSnapshot)
+            window.showAlert('Todos os dados do Firebase foram removidos com sucesso. A aplicação foi reiniciada.', 'error');
+        };
+        
+        // --- Funções de Importação/Exportação ---
+
+        /**
+         * Exporta todos os dados do usuário (Lojas, Motoboys, Taxas, Pedidos) para um arquivo JSON.
+         */
+        window.exportDataAsJson = () => {
+            if (!isAuthReady || !currentUserId) return window.showAlert('Você deve estar logado para exportar dados.', 'error');
+            
+            const exportData = {
+                meta: {
+                    appId: appId,
+                    userId: currentUserId,
+                    timestamp: new Date().toISOString()
+                },
+                // Exporta os dados necessários para recriação, mas sem o 'id' do Firebase.
+                stores: stores.map(s => ({ name: s.name })), 
+                motoboys: motoboys.map(m => ({ name: m.name })), 
+                rates: rates.map(r => ({ description: r.description, value: r.value })), 
+                orders: allOrders.map(o => ({
+                    orderNumber: o.orderNumber,
+                    storeName: o.storeName,
+                    motoboyName: o.motoboyName,
+                    feeValue: o.feeValue,
+                    feeDescription: o.feeDescription,
+                    timestamp: o.timestamp 
+                }))
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            const date = new Date().toISOString().slice(0, 10);
+            a.download = `motoboy_backup_${date}_${currentUserId.substring(0, 8)}.json`;
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            window.showAlert('Exportação concluída! Arquivo JSON baixado.', 'success');
+        };
+
+        /**
+         * Importa dados de um objeto JSON e substitui os dados existentes no Firestore.
+         */
+        const importDataFromJson = async (data) => {
+            if (!db || !currentUserId) return window.showAlert('Erro: Banco de dados indisponível ou você não está logado.', 'error');
+            
+            window.showAlert('Iniciando importação e substituição dos dados...', 'info');
+            
+            const collections = [
+                { name: 'stores', data: data.stores || [] },
+                { name: 'motoboys', data: data.motoboys || [] },
+                { name: 'rates', data: data.rates || [] },
+                { name: 'orders', data: data.orders || [] }
+            ];
+
+            try {
+                // 1. Limpar Dados Existentes
+                for (const col of collections) {
+                    const colRef = getCollectionRef(col.name);
+                    const snapshot = await getDocs(colRef);
+                    const deletePromises = [];
+                    
+                    // Exclui documentos um por um
+                    snapshot.docs.forEach((d) => {
+                        deletePromises.push(deleteDoc(doc(db, colRef.path, d.id)));
+                    });
+                    await Promise.all(deletePromises);
+                    console.log(`Limpeza da coleção ${col.name} concluída.`);
+                }
+                
+                // 2. Adicionar Novos Dados
+                for (const col of collections) {
+                    const colRef = getCollectionRef(col.name);
+                    if (col.data.length > 0) {
+                        const addPromises = col.data.map(item => {
+                            // Remove o campo 'id' e garante que o Firestore gere um novo ID.
+                            const { id, ...dataToSave } = item; 
+                            return addDoc(colRef, dataToSave);
+                        });
+                        await Promise.all(addPromises);
+                        console.log(`${col.data.length} documentos importados para ${col.name}.`);
+                    }
+                }
+
+                // 3. Conclusão
+                window.closeModal('dataTransferModal');
+                window.showAlert('Importação concluída com sucesso! Os dados foram atualizados.', 'success');
+                
+            } catch (e) {
+                console.error("Erro durante o processo de importação para o Firebase:", e);
+                window.showAlert('Erro grave na importação. O arquivo JSON pode estar inválido ou houve um problema de conexão.', 'error');
+            }
+        };
+
+
+        // --- Funções de Cadastro (CRUD) ---
+
+        document.getElementById('saveStore').addEventListener('click', async () => {
+            const name = document.getElementById('storeNameInput').value.trim();
+            if (!name) return window.showAlert('Nome da loja é obrigatório!', 'error');
+
+            const storeRef = getCollectionRef('stores');
+            if (!storeRef) return window.showAlert('Erro: Banco de dados indisponível ou você não está logado.', 'error');
+
+            try {
+                await addDoc(storeRef, { name: name }); // Firestore gera o ID
+                document.getElementById('storeNameInput').value = '';
+                document.getElementById('setupStatus').textContent = `Loja "${name}" salva com sucesso!`;
+                window.showAlert(`Loja "${name}" salva com sucesso!`);
+            } catch (e) {
+                console.error("Erro ao salvar loja no Firebase:", e);
+                window.showAlert('Erro ao salvar loja. Verifique a conexão e o login.', 'error');
+            }
+        });
+
+        window.deleteStore = async (id, name) => {
+            if (!currentUserId) return window.showAlert('Usuário não autenticado.', 'error');
+            const docRef = doc(getCollectionRef('stores'), id);
+
+            // Verifica se a loja está em uso (como loja principal)
+            if (selectedStoreId === id) {
+                 window.showAlert(`Não é possível excluir a loja "${name}" pois ela está definida como a loja principal. Selecione outra loja primeiro.`, 'error');
+                 return;
+            }
+            
+            try {
+                await deleteDoc(docRef);
+                window.showAlert(`Loja "${name}" excluída com sucesso.`, 'success');
+            } catch (e) {
+                console.error("Erro ao excluir loja no Firebase:", e);
+                window.showAlert('Erro ao excluir loja. Tente novamente.', 'error');
+            }
+        };
+
+
+        document.getElementById('saveMotoboy').addEventListener('click', async () => {
+            const name = document.getElementById('motoboyNameInput').value.trim();
+            if (!name) return window.showAlert('Nome do motoboy é obrigatório!', 'error');
+
+            const motoboyRef = getCollectionRef('motoboys');
+            if (!motoboyRef) return window.showAlert('Erro: Banco de dados indisponível ou você não está logado.', 'error');
+
+            try {
+                await addDoc(motoboyRef, { name: name });
+                document.getElementById('motoboyNameInput').value = '';
+                document.getElementById('setupStatus').textContent = `Motoboy "${name}" salvo com sucesso!`;
+                window.showAlert(`Motoboy "${name}" salvo com sucesso!`);
+            } catch (e) {
+                console.error("Erro ao salvar motoboy no Firebase:", e);
+                window.showAlert('Erro ao salvar motoboy. Tente novamente.', 'error');
+            }
+        });
+
+        window.deleteMotoboy = async (id, name) => {
+            if (!currentUserId) return window.showAlert('Usuário não autenticado.', 'error');
+            const docRef = doc(getCollectionRef('motoboys'), id);
+            
+            try {
+                await deleteDoc(docRef);
+                window.showAlert(`Motoboy "${name}" excluído com sucesso.`, 'success');
+            } catch (e) {
+                console.error("Erro ao excluir motoboy no Firebase:", e);
+                window.showAlert('Erro ao excluir motoboy. Tente novamente.', 'error');
+            }
+        };
+
+        document.getElementById('saveRate').addEventListener('click', async () => {
+            let value = parseFloat(document.getElementById('rateValueInput').value);
+
+            if (isNaN(value) || value <= 0) return window.showAlert('Valor válido (maior que zero) é obrigatório para a Taxa Fixa!', 'error');
+            
+            value = value.toFixed(2);
+            const description = 'Taxa Fixa';
+
+            const rateRef = getCollectionRef('rates');
+            if (!rateRef) return window.showAlert('Erro: Banco de dados indisponível ou você não está logado.', 'error');
+
+            try {
+                await addDoc(rateRef, { description, value });
+                document.getElementById('rateValueInput').value = '';
+                document.getElementById('setupStatus').textContent = `Taxa Fixa de R$ ${value.replace('.', ',')} salva!`;
+                window.showAlert(`Taxa Fixa de R$ ${value.replace('.', ',')} salva!`);
+            } catch (e) {
+                console.error("Erro ao salvar taxa no Firebase:", e);
+                window.showAlert('Erro ao salvar taxa. Tente novamente.', 'error');
+            }
+        });
+
+        window.deleteRate = async (id, value) => {
+            if (!currentUserId) return window.showAlert('Usuário não autenticado.', 'error');
+            const docRef = doc(getCollectionRef('rates'), id);
+            
+            try {
+                await deleteDoc(docRef);
+                window.showAlert(`Taxa de ${value} excluída com sucesso.`, 'success');
+            } catch (e) {
+                console.error("Erro ao excluir taxa no Firebase:", e);
+                window.showAlert('Erro ao excluir taxa. Tente novamente.', 'error');
+            }
+        };
+        
+        // --- Lógica do Pedido (Save Order) ---
+
+        const saveOrder = async () => {
+            if (!currentOrder.number || !currentOrder.motoboy || !currentOrder.store || !currentOrder.rate) {
+                window.showAlert('Erro interno: Faltando dados do pedido.', 'error');
+                return;
+            }
+            
+            const ordersRef = getCollectionRef('orders');
+            if (!ordersRef) return window.showAlert('Erro: Banco de dados indisponível ou você não está logado.', 'error');
+
+            try {
+                const finalOrder = {
+                    orderNumber: currentOrder.number,
+                    storeName: currentOrder.store.name,
+                    motoboyName: currentOrder.motoboy.name,
+                    feeValue: currentOrder.rate.value, 
+                    feeDescription: currentOrder.rate.description, 
+                    timestamp: Date.now(), 
+                };
+
+                await addDoc(ordersRef, finalOrder); // Firebase adiciona e gera ID
+
+                window.showAlert(`Pedido Nº ${finalOrder.orderNumber} registrado para ${finalOrder.motoboyName} (${finalOrder.feeDescription}) com sucesso!`, 'success');
+
+                // Limpa o estado e o input
+                document.getElementById('orderNumberInput').value = '';
+                currentOrder.number = null;
+                currentOrder.motoboy = null;
+                currentOrder.rate = null;
+
+            } catch (e) {
+                console.error("Erro ao salvar pedido no Firebase:", e);
+                window.showAlert('Erro ao salvar o pedido. Tente novamente.', 'error');
+            }
+        };
+        
+        // --- Edição e Exclusão de Pedidos ---
+
+        // Função que executa a exclusão após a confirmação
+        const executeDeleteOrder = async () => {
+            if (!orderIdToDelete) return;
+            if (!currentUserId) return window.showAlert('Usuário não autenticado.', 'error');
+
+            const docRef = doc(getCollectionRef('orders'), orderIdToDelete);
+
+            try {
+                await deleteDoc(docRef);
+                window.showAlert('Pedido excluído com sucesso!', 'success');
+            } catch (e) {
+                 window.showAlert('Erro ao excluir pedido. Tente novamente.', 'error');
+            }
+            
+            orderIdToDelete = null; 
+            window.closeModal('confirmDeleteModal');
+        };
+
+        // Event listener para salvar as edições
+        document.getElementById('editOrderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!editingOrderId || !currentUserId) {
+                window.showAlert('Erro: Pedido não selecionado ou usuário não autenticado.', 'error');
+                return;
+            }
+
+            const docRef = doc(getCollectionRef('orders'), editingOrderId);
+            const orderNumber = document.getElementById('editOrderNumber').value.trim();
+            const storeSelect = document.getElementById('editStoreSelect');
+            const motoboySelect = document.getElementById('editMotoboySelect');
+            let feeValue = parseFloat(document.getElementById('editFeeValue').value);
+
+            if (!orderNumber || isNaN(feeValue) || feeValue < 0) {
+                window.showAlert('Preencha todos os campos e use um valor de taxa válido (igual ou maior que zero).', 'error');
+                return;
+            }
+            
+            feeValue = feeValue.toFixed(2);
+
+            const selectedStoreId = storeSelect.value;
+            const selectedMotoboyId = motoboySelect.value;
+            
+            const selectedStore = stores.find(s => s.id === selectedStoreId);
+            const selectedMotoboy = motoboys.find(m => m.id === selectedMotoboyId);
+
+            if (!selectedStore || !selectedMotoboy) {
+                window.showAlert('Erro: Loja ou Motoboy selecionado inválido. Verifique o cadastro.', 'error');
+                return;
+            }
+            
+            // Cria o objeto com os campos a serem atualizados
+            const updatedData = {
+                orderNumber: orderNumber,
+                storeName: selectedStore.name,
+                motoboyName: selectedMotoboy.name,
+                feeValue: feeValue,
+            };
+
+            try {
+                // Aqui deve ser usada a função 'setDoc' ou 'updateDoc' para modificar um documento existente
+                await setDoc(docRef, updatedData, { merge: true });
+                window.closeModal('editOrderModal');
+                window.showAlert(`Pedido Nº ${orderNumber} atualizado com sucesso!`, 'success');
+            } catch (e) {
+                console.error("Erro ao atualizar pedido no Firebase:", e);
+                window.showAlert('Erro ao salvar as alterações. Tente novamente.', 'error');
+            }
+
+            editingOrderId = null; 
+        });
+
+
+        // --- Funções de UI (Mantidas) ---
+
+        window.selectStore = (id) => {
+            const store = stores.find(s => s.id === id);
+            if (!store) return;
+            selectedStoreId = id;
+            renderStoreSelectionButtons(); 
+            window.showAlert(`Loja principal alterada para: ${store.name}`, 'info');
+        };
+        
+        window.renderStoreSelectionButtons = () => {
+            const container = document.getElementById('storeSelectionContainer');
+            if (stores.length === 0) {
+                container.innerHTML = `<p class="text-sm text-gray-500 mt-2">Cadastre uma loja no menu acima para começar.</p>`;
+                return;
+            }
+
+            container.innerHTML = stores.map(store => {
+                const isSelected = store.id === selectedStoreId;
+                const baseClasses = 'py-2 px-4 rounded-xl font-bold transition duration-200 shadow-md';
+                const selectedClasses = 'bg-green-600 hover:bg-green-700 text-white ring-2 ring-green-300 transform scale-105';
+                const unselectedClasses = 'bg-gray-100 hover:bg-gray-200 text-gray-700';
+                const classes = isSelected ? selectedClasses : unselectedClasses;
+
+                return `
+                    <button 
+                        data-store-id="${store.id}" 
+                        class="${baseClasses} ${classes} text-sm md:text-base whitespace-nowrap"
+                        onclick="window.selectStore('${store.id}')"
+                    >
+                        ${store.name} ${isSelected ? ' ✓' : ''}
+                    </button>
+                `;
+            }).join('');
+        };
+        
+        const renderSetupList = (ulId, items, type) => {
+            const ul = document.getElementById(ulId);
+            ul.innerHTML = items.length > 0
+                ? items.map(item => {
+                    let display;
+                    let deleteFunction;
+                    
+                    if (type === 'store') {
+                        display = item.name;
+                        deleteFunction = `window.deleteStore('${item.id}', '${item.name}')`;
+                    } else if (type === 'motoboy') {
+                        display = item.name;
+                        deleteFunction = `window.deleteMotoboy('${item.id}', '${item.name}')`;
+                    } else if (type === 'rate') {
+                        const value = parseFloat(item.value).toFixed(2).replace('.', ',');
+                        display = `R$ ${value} (${item.description})`;
+                        deleteFunction = `window.deleteRate('${item.id}', 'R$ ${value}')`;
+                    }
+
+                    return `
+                        <li class="p-1 flex justify-between items-center bg-gray-100 rounded text-gray-700 transition">
+                            <span>${display}</span>
+                            <button 
+                                onclick="${deleteFunction}" 
+                                class="text-red-500 hover:text-red-700 font-bold ml-4 p-1 rounded-full text-xs" 
+                                title="Excluir ${display}"
+                            >
+                                [x]
+                            </button>
+                        </li>
+                    `;
+                }).join('')
+                : '<li class="text-gray-400">Nenhum item cadastrado.</li>';
+        };
+
+        const renderSelectionButtons = (containerId, items, type) => {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            if (items.length === 0) {
+                if (type === 'motoboy') {
+                     container.innerHTML = `<p class="text-gray-500 text-sm">Nenhum motoboy cadastrado. Cadastre no menu de Configuração.</p>`;
+                } else {
+                    container.innerHTML = `<p class="text-gray-500 text-sm">Nenhuma taxa fixa cadastrada. Use a opção de Taxa Avulsa abaixo.</p>`;
+                }
+                return;
+            }
+
+            items.forEach(item => {
+                let display;
+                if(type === 'motoboy') {
+                    display = item.name;
+                } else {
+                    const value = parseFloat(item.value).toFixed(2).replace('.', ',');
+                    display = `R$ ${value} (${item.description})`;
+                }
+                
+                const button = document.createElement('button');
+                button.textContent = display;
+                button.className = 'w-full py-3 bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium rounded-xl shadow-md transition duration-200';
+                
+                button.addEventListener('click', () => {
+                    handleSelection(item, type);
+                });
+                container.appendChild(button);
+            });
+        };
+        
+        document.getElementById('applyManualRate').addEventListener('click', () => {
+            const manualRateInput = document.getElementById('manualRateInput');
+            let manualValue = parseFloat(manualRateInput.value);
+
+            if (isNaN(manualValue) || manualValue < 0) {
+                window.showAlert('Por favor, insira um valor de taxa avulsa válido (pode ser zero).', 'error');
+                return;
+            }
+
+            manualValue = manualValue.toFixed(2);
+            
+            const manualRate = { 
+                id: crypto.randomUUID(), 
+                description: 'Taxa Avulsa', 
+                value: manualValue 
+            };
+            
+            handleSelection(manualRate, 'rate');
+            manualRateInput.value = '';
+        });
+
+        document.getElementById('startOrderButton').addEventListener('click', () => {
+            const orderNumber = document.getElementById('orderNumberInput').value.trim();
+            const statusMsg = document.getElementById('statusMessage');
+
+            if (!isAuthReady || !currentUserId) {
+                 statusMsg.textContent = 'Aguardando login no Firebase...';
+                 window.showAlert('Você deve estar logado para registrar pedidos.', 'info');
+                 window.openModal('loginModal');
+                 return;
+            }
+
+            if (!orderNumber) {
+                statusMsg.textContent = 'Por favor, digite o número do pedido.';
+                return;
+            }
+
+            if (motoboys.length === 0 || stores.length === 0 || !selectedStoreId) {
+                statusMsg.textContent = 'Erro: Verifique se há lojas e motoboys cadastrados e se uma loja principal está selecionada.';
+                window.showAlert('Erro: Cadastre lojas e motoboys e selecione uma loja principal.', 'error');
+                return;
+            }
+            
+            const selectedStore = stores.find(s => s.id === selectedStoreId);
+
+            currentOrder.number = orderNumber;
+            currentOrder.store = selectedStore; 
+            statusMsg.textContent = '';
+            
+            window.openModal('motoboySelectModal');
+        });
+
+        const handleSelection = (item, type) => {
+            if (type === 'motoboy') {
+                currentOrder.motoboy = item;
+                window.closeModal('motoboySelectModal');
+                window.openModal('rateSelectModal');
+            } else if (type === 'rate') {
+                currentOrder.rate = item;
+                window.closeModal('rateSelectModal');
+                saveOrder();
+            }
+        };
+
+        window.confirmDeleteOrder = (id, orderNumber) => {
+            const messageElement = document.getElementById('deleteConfirmationMessage');
+            messageElement.innerHTML = `Você tem certeza que deseja excluir o **Pedido Nº ${orderNumber}**? Esta ação não pode ser desfeita.`;
+            orderIdToDelete = id; 
+            window.openModal('confirmDeleteModal');
+        };
+
+        window.openEditModal = (id) => {
+            const orderToEdit = allOrders.find(order => order.id === id);
+
+            if (!orderToEdit) {
+                window.showAlert('Pedido não encontrado para edição.', 'error');
+                return;
+            }
+            
+            if(stores.length === 0 || motoboys.length === 0) {
+                 window.showAlert('Você precisa ter pelo menos uma Loja e um Motoboy cadastrado para editar este pedido.', 'error');
+                 return;
+            }
+
+            editingOrderId = id;
+
+            document.getElementById('editOrderNumber').value = orderToEdit.orderNumber;
+            document.getElementById('editFeeValue').value = parseFloat(orderToEdit.feeValue || 0).toFixed(2); 
+
+            const storeSelect = document.getElementById('editStoreSelect');
+            const motoboySelect = document.getElementById('editMotoboySelect');
+            
+            // Popula Selects de Loja e seleciona a loja atual
+            storeSelect.innerHTML = stores.map(store => 
+                `<option value="${store.id}" ${store.name === orderToEdit.storeName ? 'selected' : ''}>${store.name}</option>`
+            ).join('');
+            
+            // Popula Selects de Motoboy e seleciona o motoboy atual
+            motoboySelect.innerHTML = motoboys.map(motoboy => 
+                `<option value="${motoboy.id}" ${motoboy.name === orderToEdit.motoboyName ? 'selected' : ''}>${motoboy.name}</option>`
+            ).join('');
+
+            window.openModal('editOrderModal');
+        };
+
+        const getMotoboyOrders = (motoboyName) => {
+            return allOrders.filter(order => order.motoboyName === motoboyName);
+        };
+        
+        const printReport = (title, htmlContent) => {
+            const printWindow = window.open('', '_blank', 'height=600,width=800');
+            if (!printWindow) {
+                window.showAlert('Falha ao abrir janela de impressão. Verifique se o bloqueador de pop-up está ativo.', 'error');
+                return;
+            }
+            
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${title}</title>
+                    <style>
+                        @media print {
+                            body { font-family: 'Inter', sans-serif; margin: 20px; color: #000; }
+                            .report-header { text-align: center; margin-bottom: 20px; }
+                            .report-title { font-size: 24px; font-weight: bold; }
+                            .report-subtitle { font-size: 14px; margin-bottom: 15px; }
+                            .order-item, .store-summary { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #ccc; }
+                            .order-item:last-child, .store-summary:last-child { border-bottom: none; }
+                            .total-line { display: flex; justify-content: space-between; padding: 10px 0; border-top: 2px solid #000; font-weight: bold; margin-top: 10px; font-size: 18px; }
+                            .total-footer { text-align: center; margin-top: 50px; }
+                            .signature-line { border-top: 1px solid #000; width: 50%; margin: 0 auto; margin-top: 50px; padding-top: 5px; font-size: 12px; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${htmlContent}
+                    <div class="total-footer">
+                        <p class="signature-line">Assinatura do Motoboy</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+        };
+
+        window.printDeliveryReport = (motoboyName) => {
+            const orders = getMotoboyOrders(motoboyName).sort((a, b) => b.timestamp - a.timestamp);
+            if (orders.length === 0) return window.showAlert(`Nenhum pedido para ${motoboyName} para imprimir.`, 'info');
+
+            let totalFee = 0;
+            const ordersHtml = orders.map(order => {
+                const feeValue = parseFloat(order.feeValue || 0);
+                totalFee += feeValue;
+                const feeFormatted = feeValue.toFixed(2).replace('.', ',');
+                const storeInfo = order.storeName ? ` (${order.storeName})` : '';
+
+                return `
+                    <div class="order-item">
+                        <span style="font-size: 16px;">Pedido: ${order.orderNumber}${storeInfo}</span>
+                        <span style="font-size: 16px; font-weight: bold;">R$ ${feeFormatted}</span>
+                    </div>
+                `;
+            }).join('');
+
+            const datePrinted = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            const htmlContent = `
+                <div class="report-header">
+                    <div class="report-title">Relatório de Entregas</div>
+                    <div style="font-size: 18px; font-weight: bold; margin-top: 5px;">Motoboy: ${motoboyName}</div>
+                    <div class="report-subtitle">Data de Impressão: ${datePrinted}</div>
+                </div>
+                <div style="border-bottom: 2px solid #000; padding-bottom: 5px;"></div>
+                ${ordersHtml}
+                <div class="total-line" style="border-top: 2px solid #000; margin-top: 10px;">
+                    <span>Total de Taxas:</span>
+                    <span>R$ ${totalFee.toFixed(2).replace('.', ',')}</span>
+                </div>
+            `;
+            printReport("Relatório de Entregas - " + motoboyName, htmlContent);
+        };
+
+        window.printStoreTotalsReport = (motoboyName) => {
+            const orders = getMotoboyOrders(motoboyName);
+            if (orders.length === 0) return window.showAlert(`Nenhum pedido para ${motoboyName} para imprimir.`, 'info');
+
+            let grandTotalFee = 0;
+            let grandTotalOrders = orders.length;
+
+            const groupedByStore = orders.reduce((acc, order) => {
+                const storeName = order.storeName || 'Loja Desconhecida';
+                if (!acc[storeName]) {
+                    acc[storeName] = { count: 0, totalFee: 0 };
+                }
+                const feeValue = parseFloat(order.feeValue || 0);
+                acc[storeName].count += 1;
+                acc[storeName].totalFee += feeValue;
+                grandTotalFee += feeValue;
+                return acc;
+            }, {});
+            
+            const storesHtml = Object.keys(groupedByStore).sort().map(storeName => {
+                const data = groupedByStore[storeName];
+                const totalFeeFormatted = data.totalFee.toFixed(2).replace('.', ',');
+
+                return `
+                    <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+                        <h4 style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">${storeName}</h4>
+                        <div class="store-summary">
+                            <span>Total de Pedidos:</span>
+                            <span>${data.count}</span>
+                        </div>
+                        <div class="store-summary">
+                            <span>Total de Taxas:</span>
+                            <span>R$ ${totalFeeFormatted}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            const datePrinted = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            const htmlContent = `
+                <div class="report-header">
+                    <div class="report-title">Relatório de Totais por Loja</div>
+                    <div style="font-size: 18px; font-weight: bold; margin-top: 5px;">Motoboy: ${motoboyName}</div>
+                    <div class="report-subtitle">Data de Impressão: ${datePrinted}</div>
+                </div>
+                <div style="margin-top: 20px;">
+                    ${storesHtml}
+                </div>
+                <div class="total-line" style="margin-top: 20px;">
+                    <span>Total Geral de Pedidos:</span>
+                    <span>${grandTotalOrders}</span>
+                </div>
+                <div class="total-line">
+                    <span>Total Geral de Taxas:</span>
+                    <span>R$ ${grandTotalFee.toFixed(2).replace('.', ',')}</span>
+                </div>
+            `;
+            printReport("Relatório de Totais por Loja - " + motoboyName, htmlContent);
+        };
+
+
+        const renderMotoboyCards = (orders, searchTerm = '') => {
+            const container = document.getElementById('motoboyOrdersContainer');
+            const loadingTextElement = document.getElementById('loadingText');
+            const lowerCaseSearchTerm = searchTerm.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            
+            if (loadingTextElement) loadingTextElement.style.display = 'none';
+
+            let filteredOrders = orders;
+            if (lowerCaseSearchTerm) {
+                filteredOrders = orders.filter(order => {
+                    const orderNumber = order.orderNumber.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    const storeName = order.storeName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    const motoboyName = order.motoboyName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
+                    
+                    return orderNumber.includes(lowerCaseSearchTerm) ||
+                           storeName.includes(lowerCaseSearchTerm) ||
+                           motoboyName.includes(lowerCaseSearchTerm); 
+                });
+            }
+
+            if (filteredOrders.length === 0) {
+                const message = lowerCaseSearchTerm 
+                    ? `Nenhum pedido encontrado com o termo **"${searchTerm}"**. Tente pesquisar por número, loja ou motoboy.` 
+                    : 'Nenhum pedido registrado ainda. Os dados serão carregados do Firebase aqui.';
+                    
+                container.innerHTML = `<div class="sm:col-span-2 lg:col-span-3 xl:col-span-4 w-full"><p class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">${message}</p></div>`;
+                return;
+            }
+            
+            const groupedByMotoboy = filteredOrders.reduce((acc, order) => {
+                const motoboyName = order.motoboyName;
+                if (!acc[motoboyName]) {
+                    acc[motoboyName] = {
+                        orders: [],
+                        totalFee: 0,
+                    };
+                }
+                acc[motoboyName].orders.push(order);
+                acc[motoboyName].totalFee += parseFloat(order.feeValue || 0);
+                return acc;
+            }, {});
+            
+            let htmlContent = '';
+            
+            for (const motoboyName in groupedByMotoboy) {
+                const motoboyData = groupedByMotoboy[motoboyName];
+                let totalFeeFormatted = motoboyData.totalFee.toFixed(2).replace('.', ',');
+                
+                const ordersSorted = motoboyData.orders.sort((a, b) => b.timestamp - a.timestamp); 
+                const groupedByDate = ordersSorted.reduce((acc, order) => {
+                    const dateKey = order.timestamp ? new Date(order.timestamp).toLocaleDateString('pt-BR') : 'Data Desconhecida';
+                    if (!acc[dateKey]) {
+                        acc[dateKey] = [];
+                    }
+                    acc[dateKey].push(order);
+                    return acc;
+                }, {});
+                
+                let dailyEntriesHtml = '';
+                for (const dateKey in groupedByDate) {
+                    
+                    const ordersListHtml = groupedByDate[dateKey].map(order => {
+                        const feeFormatted = parseFloat(order.feeValue || 0).toFixed(2).replace('.', ',');
+                        const storeInfo = order.storeName ? ` (${order.storeName})` : ''; 
+                        
+                        const isMatch = order.orderNumber.toLowerCase().includes(lowerCaseSearchTerm) || 
+                                        order.storeName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(lowerCaseSearchTerm) ||
+                                        order.motoboyName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(lowerCaseSearchTerm); 
+
+                        const highlightClass = lowerCaseSearchTerm && isMatch ? 'bg-yellow-100 ring-2 ring-yellow-400 rounded-lg px-2 -mx-2' : '';
+
+                        return `
+                            <li class="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                                <div class="flex flex-col flex-grow ${highlightClass}">
+                                    <span class="font-medium text-gray-800 text-sm md:text-base">Pedido: ${order.orderNumber}</span>
+                                    <span class="text-xs text-gray-500">${storeInfo.trim()}</span>
+                                </div>
+                                <div class="flex items-center space-x-2 flex-shrink-0">
+                                     <span class="text-lg font-bold text-green-600 whitespace-nowrap">R$ ${feeFormatted}</span>
+                                     
+                                     <button onclick="window.confirmDeleteOrder('${order.id}', '${order.orderNumber}')" 
+                                        class="text-white bg-red-500 hover:bg-red-600 p-1 rounded transition duration-200 shadow-sm" 
+                                        title="Excluir Pedido"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                    <button onclick="window.openEditModal('${order.id}')" class="text-white bg-blue-500 hover:bg-blue-600 p-1 rounded transition duration-200 shadow-sm" title="Editar Pedido">
+                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zm-3.535 3.536l-8.5 8.5V18h4.949l8.5-8.5-4.949-4.949z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </li>
+                        `;
+                    }).join('');
+                    
+                    dailyEntriesHtml += `
+                        <div class="mt-4 pt-4 border-t border-gray-100 first:mt-0 first:pt-0 first:border-t-0">
+                            <h5 class="text-sm font-bold uppercase text-indigo-500 mb-2">${dateKey}</h5>
+                            <ul class="space-y-1">
+                                ${ordersListHtml}
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+                htmlContent += `
+                    <div class="bg-gray-50 rounded-xl shadow-lg p-4 flex flex-col justify-between border-t-4 border-indigo-600 h-96">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-3 mb-3 border-b border-gray-300 gap-2">
+                            <h3 class="text-xl font-extrabold text-indigo-700 truncate">${motoboyName}</h3>
+                            <div class="flex space-x-2 flex-wrap justify-end">
+                                <button onclick="window.printDeliveryReport('${motoboyName}')" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-1 px-3 rounded-full transition duration-200 shadow-md whitespace-nowrap">
+                                    Imprimir Lista
+                                </button>
+                                <button onclick="window.printStoreTotalsReport('${motoboyName}')" class="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold py-1 px-3 rounded-full transition duration-200 shadow-md whitespace-nowrap">
+                                    Imprimir Lojas
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex-grow overflow-y-auto -mx-4 px-4">
+                            ${dailyEntriesHtml}
+                        </div>
+
+                        <div class="flex justify-between items-center pt-3 mt-3 border-t border-gray-300 bg-white p-2 rounded-lg shadow-inner">
+                            <span class="text-lg font-semibold text-gray-700">Total:</span>
+                            <span class="text-2xl font-extrabold text-green-700">R$ ${totalFeeFormatted}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = htmlContent;
+        };
+
+
+        // --- DOMContentLoaded e Event Listeners Gerais ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchContainer = document.getElementById('searchContainer');
+            const toggleSearchButton = document.getElementById('toggleSearchButton');
+            const searchInput = document.getElementById('searchInput');
+            const clearSearchButton = document.getElementById('clearSearchButton');
+            const searchToggleIcon = document.getElementById('searchToggleIcon');
+            
+            // NOVO: Variáveis e Listeners para o Menu Dropdown de Admin
+            const adminMenuButton = document.getElementById('adminMenuButton');
+            const adminDropdownMenu = document.getElementById('adminDropdownMenu');
+            
+            // Botões individuais (agora dentro do dropdown)
+            const openSetupModalButton = document.getElementById('openSetupModal');
+            const openExportImportModalButton = document.getElementById('openExportImportModal');
+            const openClearModalButton = document.getElementById('openClearModal');
+
+            // Função para fechar o menu ao clicar fora
+            const closeAdminMenu = (event) => {
+                // Fechar o menu se estiver ativo E o clique não foi no botão do menu E o clique não foi no próprio menu
+                if (adminDropdownMenu.classList.contains('dropdown-active') && 
+                    !adminDropdownMenu.contains(event.target) && 
+                    !adminMenuButton.contains(event.target)) 
+                {
+                    adminDropdownMenu.classList.remove('dropdown-active');
+                    adminDropdownMenu.classList.add('opacity-0', 'invisible');
+                }
+            };
+            
+            // Toggle do Menu ao clicar no botão de Engrenagem
+            adminMenuButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Previne que o clique feche o menu imediatamente
+                
+                const isActive = adminDropdownMenu.classList.toggle('dropdown-active');
+                
+                if (isActive) {
+                    adminDropdownMenu.classList.remove('opacity-0', 'invisible');
+                } else {
+                    adminDropdownMenu.classList.add('opacity-0', 'invisible');
+                }
+            });
+
+            // Fechar o menu ao clicar em qualquer lugar da tela
+            document.addEventListener('click', closeAdminMenu);
+
+            // Ações dos botões do Dropdown (abrem o modal e fecham o menu)
+            [openSetupModalButton, openExportImportModalButton, openClearModalButton].forEach(button => {
+                button.addEventListener('click', () => {
+                    // Fecha o dropdown após o clique
+                    adminDropdownMenu.classList.remove('dropdown-active');
+                    adminDropdownMenu.classList.add('opacity-0', 'invisible');
+                });
+            });
+
+            // Conexão dos botões de ação (Agora usam os novos IDs do dropdown)
+            openClearModalButton.addEventListener('click', () => window.openModal('clearDataConfirmationModal'));
+            openSetupModalButton.addEventListener('click', () => window.openModal('setupModal'));
+            openExportImportModalButton.addEventListener('click', () => window.openModal('dataTransferModal'));
+            
+            // Listeners dos Modais
+            document.getElementById('confirmClearDataButton').addEventListener('click', window.clearAllData);
+            document.getElementById('cancelClearDataButton').addEventListener('click', () => window.closeModal('clearDataConfirmationModal'));
+            document.getElementById('closeSetupModal').addEventListener('click', () => window.closeModal('setupModal'));
+            document.getElementById('confirmDeleteButton').addEventListener('click', executeDeleteOrder);
+            document.getElementById('cancelDeleteButton').addEventListener('click', () => window.closeModal('confirmDeleteModal'));
+            document.getElementById('exportDataButton').addEventListener('click', window.exportDataAsJson);
+            document.getElementById('closeDataTransferModal').addEventListener('click', () => window.closeModal('dataTransferModal'));
+
+
+            const importFileInput = document.getElementById('importFileInput');
+            const importDataButton = document.getElementById('importDataButton');
+
+            importFileInput.addEventListener('change', () => {
+                // Habilita o botão de Importar se um arquivo for selecionado
+                importDataButton.disabled = importFileInput.files.length === 0;
+            });
+
+            importDataButton.addEventListener('click', () => {
+                const file = importFileInput.files[0];
+                if (!file) return window.showAlert('Selecione um arquivo JSON para importar.', 'error');
+                
+                window.showAlert('A importação iniciará e substituirá seus dados. Não feche a janela.', 'info');
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const jsonContent = JSON.parse(e.target.result);
+                        // Validação básica de estrutura
+                        if (!jsonContent.stores || !jsonContent.motoboys || !jsonContent.orders) {
+                            window.showAlert('Erro: Arquivo JSON inválido. Faltando coleções principais (stores, motoboys, orders).', 'error');
+                            return;
+                        }
+                        
+                        await importDataFromJson(jsonContent);
+
+                    } catch (error) {
+                        console.error("Erro ao processar arquivo:", error);
+                        window.showAlert('Erro: O arquivo não é um JSON válido ou o conteúdo está corrompido.', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            });
+
+
+            // Lógica de pesquisa (UI)
+            searchContainer.style.maxHeight = '0'; 
+
+            toggleSearchButton.addEventListener('click', () => {
+                const isHidden = searchContainer.style.maxHeight === '0px' || searchContainer.style.maxHeight === '';
+                
+                if (isHidden) {
+                    searchContainer.style.maxHeight = '200px'; 
+                    searchToggleIcon.classList.remove('rotate-0');
+                    searchToggleIcon.classList.add('rotate-180');
+                } else {
+                    searchContainer.style.maxHeight = '0';
+                    searchToggleIcon.classList.remove('rotate-180');
+                    searchToggleIcon.classList.add('rotate-0');
+                    if (currentSearchTerm) {
+                         clearSearchButton.click();
+                    }
+                }
+            });
+
+            searchInput.addEventListener('keyup', (e) => {
+                const term = e.target.value.trim();
+                if (term.length >= 2 || term.length === 0) { 
+                    currentSearchTerm = term;
+                    renderMotoboyCards(allOrders, currentSearchTerm);
+                }
+            });
+
+            clearSearchButton.addEventListener('click', () => {
+                if (searchInput.value || currentSearchTerm) {
+                    searchInput.value = '';
+                    currentSearchTerm = '';
+                    renderMotoboyCards(allOrders, currentSearchTerm);
+                    window.showAlert('Filtro de pesquisa limpo. Todos os pedidos visíveis.', 'info');
+                } else {
+                    window.showAlert('A pesquisa já está limpa.', 'info');
+                }
+            });
+
+            // --- Lógica de Login e Logout (E-mail/Senha) ---
+            
+            // Adiciona listener para o formulário de login
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value.trim();
+                const password = document.getElementById('loginPassword').value.trim();
+                const statusMessage = document.getElementById('loginStatusMessage');
+                statusMessage.textContent = '';
+                
+                if (!auth) {
+                    statusMessage.textContent = 'Erro de conexão com o Firebase.';
+                    window.showAlert('Erro: O Firebase não foi inicializado corretamente.', 'error');
+                    return;
+                }
+                
+                if (!email || !password) {
+                    statusMessage.textContent = 'Preencha e-mail e senha.';
+                    return;
+                }
+
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    // O onAuthStateChanged tratará o sucesso (fechando o modal e mostrando a UI)
+                    window.showAlert('Login realizado com sucesso!', 'success');
+
+                } catch (error) {
+                    let message = 'Erro de Login. Verifique suas credenciais.';
+                    if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                        message = 'E-mail ou senha inválidos.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        message = 'O formato do e-mail é inválido.';
+                    } else {
+                         message = `Erro desconhecido: ${error.message}`;
+                    }
+                    statusMessage.textContent = message;
+                    window.showAlert(message, 'error');
+                }
+            });
+
+            // Adiciona listener para o botão de Logout
+            document.getElementById('logoutButton').addEventListener('click', async () => {
+                if (!auth) return;
+                try {
+                    await signOut(auth);
+                    // O onAuthStateChanged tratará o sucesso (abrindo o modal de login)
+                    window.showAlert('Sessão encerrada com sucesso.', 'info');
+                } catch (error) {
+                    console.error("Erro ao fazer logout:", error);
+                    window.showAlert('Erro ao tentar sair da sessão.', 'error');
+                }
+            });
+            // ----------------------------------------------------
+
+            // Iniciar a conexão com o Firebase
+            initializeFirebase();
+        });
+    </script>
+</body>
+</html>
